@@ -172,6 +172,7 @@ The `Asset` model stores metadata for uploaded brand files.
 | fileType | String | Yes | Image, PDF, logo, guideline, etc. |
 | uploadedBy | String | Yes | References User |
 | createdAt | DateTime | Yes | Created timestamp |
+| updatedAt | DateTime | Yes | Updated timestamp |
 
 ### Relationships
 
@@ -304,6 +305,7 @@ model Asset {
   fileType   String
   uploadedBy String
   createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   brand      Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
   uploader   User     @relation(fields: [uploadedBy], references: [id])
@@ -399,7 +401,14 @@ BrandDocumentChunk has embedding vector
 
 This would support retrieval-augmented generation for brand guidelines and uploaded documents.
 
-## 13. Completion Criteria
+## 13. Implementation Refinement Notes
+
+- During Prisma implementation, consider replacing freeform String fields with enums for `Campaign.status`, `Subscription.plan`, `Subscription.status`, and `AiUsage.actionType`.
+- Keep `Brand.colors` and `Brand.fonts` as `String[]` for MVP because they are simple lists. Consider `Json` later only if richer brand metadata is needed.
+- Auth.js adapter tables such as `Account`, `Session`, and `VerificationToken` should be finalized during the authentication implementation ticket, depending on the selected Auth.js session and provider strategy.
+- Add `updatedAt` to `Asset` because asset metadata may be edited later.
+
+## 14. Completion Criteria
 
 Ticket 3 is complete when:
 
