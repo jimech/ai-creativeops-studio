@@ -1,40 +1,38 @@
-# Product Brief: Maison Muse
-
-## Product Name
-
-Maison Muse
+# Product Brief: ai-creativeops-studio
 
 ## One-Line Description
 
-Maison Muse is an AI-powered brand content studio for fashion, beauty, and lifestyle brands.
+ai-creativeops-studio is an AI-powered creative operations platform that helps fashion, beauty, jewelry, and lifestyle brands generate campaign ideas, social content, ad hooks, captions, and visual direction faster.
 
 ## Problem
 
-Small and mid-sized fashion, beauty, jewelry, and lifestyle brands need high-quality creative direction, campaign ideas, social content, captions, ad hooks, and visual concepts, but many do not have access to a full in-house creative team.
+Small and mid-sized creative brands are expected to produce high-quality marketing content across Instagram, TikTok, email, ads, and seasonal campaigns -- but many do not have the budget for a full creative team.
 
-As a result, founders, marketers, and content teams often spend too much time planning campaigns manually, struggle to stay consistent with brand voice, and lack a repeatable system for generating polished marketing ideas.
+Founders, social media managers, and small agencies often lose hours brainstorming campaigns, writing captions, developing ad angles, and translating brand identity into consistent content.
+
+The result is slow campaign planning, inconsistent messaging, and missed opportunities to launch polished creative work quickly.
 
 ## Target Users
 
-Maison Muse is designed for:
+ai-creativeops-studio is built for:
 
 - Fashion founders
 - Beauty brands
 - Jewelry brands
 - Lifestyle brands
-- Content agencies
 - Social media managers
+- Content agencies
 - Creative directors
 
 ## Solution
 
-Maison Muse allows brands to upload their brand assets, product information, tone of voice, campaign goals, and creative direction. The platform then uses AI to generate brand-aligned campaign concepts, captions, ad hooks, image prompts, video ideas, content calendar ideas, and other creative assets.
+ai-creativeops-studio gives brands a centralized AI studio where they can enter brand details, product information, tone of voice, campaign goals, and creative direction.
 
-The goal is to help small creative teams produce campaign-ready ideas faster while keeping the output aligned with the brand's identity.
+The platform uses AI to generate brand-aligned campaign concepts, captions, hooks, image prompts, video ideas, and content calendar ideas. This helps lean creative teams move from idea to campaign direction in minutes instead of days.
 
 ## MVP Features
 
-The MVP will include:
+The MVP includes:
 
 - User authentication
 - Brand onboarding
@@ -50,21 +48,35 @@ The MVP will include:
 
 ## Business Model
 
-Maison Muse will use a subscription SaaS model with three pricing tiers:
+ai-creativeops-studio will use a subscription SaaS model with three pricing tiers:
 
-- Free plan
-- Pro plan
-- Agency plan
+### Free Plan
 
-The Free plan helps users try the product. The Pro plan supports individual brands and founders. The Agency plan supports users managing multiple brands or client campaigns.
+For new users who want to test the product and generate a limited number of creative ideas.
+
+### Pro Plan
+
+For founders, solo marketers, and small brands that need regular AI-powered campaign support.
+
+### Agency Plan
+
+For content agencies and creative teams managing multiple brands or client campaigns.
+
+## Positioning
+
+ai-creativeops-studio sits between a blank-page AI writing tool and a full creative agency.
+
+Unlike generic AI tools, it is focused specifically on creative campaign operations for fashion, beauty, jewelry, and lifestyle brands.
+
+Unlike hiring an agency, it gives smaller brands an affordable way to generate strategic campaign direction, content ideas, and brand-aligned marketing assets on demand.
 
 ## Success Criteria
 
 Ticket 1 is complete when:
 
-- The product brief clearly explains the problem.
-- The target users are listed.
-- The AI-powered solution is clearly described.
-- MVP features are documented.
+- The product problem is clearly explained.
+- The target users are defined.
+- The AI-powered solution is described.
+- MVP features are listed.
 - The subscription business model is included.
-- The brief is saved in the project documentation folder.
+- The brief can be saved as `docs/product-brief.md`.
