@@ -1,14 +1,22 @@
 # Product Brief: Maison Muse
 
+## Product Name
+
+Maison Muse
+
 ## One-Line Description
 
 Maison Muse is an AI-powered brand content studio for fashion, beauty, and lifestyle brands.
 
 ## Problem
 
-Small and mid-sized fashion and beauty brands need high-quality campaign ideas, social content, ad concepts, and visual direction, but they often do not have access to a full creative team. Founders, marketers, and creative leads must move quickly while still protecting brand quality, voice, and consistency across channels.
+Small and mid-sized fashion, beauty, jewelry, and lifestyle brands need high-quality creative direction, campaign ideas, social content, captions, ad hooks, and visual concepts, but many do not have access to a full in-house creative team.
+
+As a result, founders, marketers, and content teams often spend too much time planning campaigns manually, struggle to stay consistent with brand voice, and lack a repeatable system for generating polished marketing ideas.
 
 ## Target Users
+
+Maison Muse is designed for:
 
 - Fashion founders
 - Beauty brands
@@ -20,19 +28,13 @@ Small and mid-sized fashion and beauty brands need high-quality campaign ideas, 
 
 ## Solution
 
-Maison Muse gives brands a focused workspace for turning brand context, product information, and campaign goals into polished campaign concepts and content ideas. Users can upload brand assets, define tone of voice, provide product details, and generate brand-aligned creative outputs using AI.
+Maison Muse allows brands to upload their brand assets, product information, tone of voice, campaign goals, and creative direction. The platform then uses AI to generate brand-aligned campaign concepts, captions, ad hooks, image prompts, video ideas, content calendar ideas, and other creative assets.
 
-The product helps teams move from brief to campaign direction faster by generating:
-
-- Campaign concepts
-- Social captions
-- Ad hooks
-- Image prompts
-- Video ideas
-- Content calendar ideas
-- Brand-aligned creative assets
+The goal is to help small creative teams produce campaign-ready ideas faster while keeping the output aligned with the brand's identity.
 
 ## MVP Features
+
+The MVP will include:
 
 - User authentication
 - Brand onboarding
@@ -46,55 +48,23 @@ The product helps teams move from brief to campaign direction faster by generati
 - Stripe subscription billing
 - Basic admin dashboard
 
-## Core User Flows
-
-### New User Flow
-
-1. User signs up.
-2. User creates a brand profile.
-3. User uploads logo, product images, and brand guidelines.
-4. User selects a campaign goal.
-5. AI generates campaign concepts.
-6. User saves, edits, or exports the result.
-
-### Campaign Generation Flow
-
-1. User clicks "Create Campaign."
-2. User enters product, audience, goal, and platform.
-3. System validates the input.
-4. AI generates campaign ideas.
-5. Results are saved to the database.
-6. User can edit, regenerate, or export.
-
-### Billing Flow
-
-1. User selects a plan.
-2. Stripe Checkout opens.
-3. Stripe webhook confirms payment.
-4. User account is upgraded.
-5. AI usage limits are updated.
-
 ## Business Model
 
-Maison Muse is a subscription SaaS product with Free, Pro, and Agency plans.
+Maison Muse will use a subscription SaaS model with three pricing tiers:
 
-Plan tiers can be differentiated by:
+- Free plan
+- Pro plan
+- Agency plan
 
-- Number of brands
-- Number of saved campaigns
-- AI generation limits
-- Brand asset storage limits
-- Access to advanced export options
-- Team collaboration features
-- Agency-level client management
+The Free plan helps users try the product. The Pro plan supports individual brands and founders. The Agency plan supports users managing multiple brands or client campaigns.
 
-## Future Opportunities
+## Success Criteria
 
-- RAG-powered brand assistant
-- Team collaboration
-- Content calendar
-- Automated campaign reminders
-- PDF campaign export
-- AI usage limits by plan
-- Analytics dashboard
-- Audit logs
+Ticket 1 is complete when:
+
+- The product brief clearly explains the problem.
+- The target users are listed.
+- The AI-powered solution is clearly described.
+- MVP features are documented.
+- The subscription business model is included.
+- The brief is saved in the project documentation folder.
