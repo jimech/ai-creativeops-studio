@@ -43,6 +43,14 @@ export type CampaignGenerationResult = {
   contentCalendarIdeas: string[];
 };
 
+export type CampaignGenerationMode = "mock" | "openai";
+
+export type CampaignGenerationOutcome = {
+  result: CampaignGenerationResult;
+  generationMode: CampaignGenerationMode;
+  tokensUsed: number | null;
+};
+
 export class CampaignGenerationError extends Error {
   constructor(message: string, options?: { cause?: unknown }) {
     super(message, options);
@@ -314,12 +322,16 @@ function toCampaignGenerationError(error: unknown): CampaignGenerationError {
 
 export async function generateCampaignIdeas(
   input: GenerateCampaignIdeasInput,
-): Promise<CampaignGenerationResult> {
+): Promise<CampaignGenerationOutcome> {
   assertMockModeNotInProduction();
 
   if (canUseMockGenerationMode()) {
     console.info("[campaign-generation] Using explicit mock generation mode.");
-    return generateMockCampaignIdeas(input);
+    return {
+      result: generateMockCampaignIdeas(input),
+      generationMode: "mock",
+      tokensUsed: 0,
+    };
   }
 
   try {
@@ -349,7 +361,11 @@ export async function generateCampaignIdeas(
       );
     }
 
-    return validateGenerationResult(parseModelJson(content));
+    return {
+      result: validateGenerationResult(parseModelJson(content)),
+      generationMode: "openai",
+      tokensUsed: response.usage?.total_tokens ?? null,
+    };
   } catch (error) {
     throw toCampaignGenerationError(error);
   }
