@@ -3,10 +3,28 @@ import { NextResponse } from "next/server";
 import {
   CampaignGenerationError,
   generateCampaignIdeas,
+  logCampaignGenerationError,
+  type CampaignGenerationResult,
 } from "@/lib/ai/campaign-generator";
 import { getCurrentUserId } from "@/lib/auth/authorization";
+import { CampaignStatus } from "@/lib/db/generated/prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { generateCampaignRequestSchema } from "@/lib/validators/generate-campaign";
+
+function buildCampaignTitle(
+  campaignGoal: string,
+  result: CampaignGenerationResult,
+): string {
+  const firstConcept = result.campaignConcepts[0]?.trim();
+
+  if (firstConcept) {
+    return firstConcept.length > 120
+      ? `${firstConcept.slice(0, 117)}...`
+      : firstConcept;
+  }
+
+  return campaignGoal;
+}
 
 export async function POST(request: Request) {
   const userId = await getCurrentUserId();
@@ -57,6 +75,7 @@ export async function POST(request: Request) {
       ownerId: userId,
     },
     select: {
+      id: true,
       name: true,
       industry: true,
       toneOfVoice: true,
@@ -93,8 +112,38 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json(result);
+    const campaign = await prisma.campaign.create({
+      data: {
+        brandId: brand.id,
+        title: buildCampaignTitle(campaignGoal, result),
+        goal: campaignGoal,
+        platform,
+        status: CampaignStatus.SAVED,
+        aiOutput: {
+          ...result,
+          brief: {
+            campaignType,
+            productOrOffer,
+            audience,
+            keyMessage,
+            desiredTone,
+            timeline,
+            additionalNotes,
+          },
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    return NextResponse.json({
+      campaignId: campaign.id,
+      ...result,
+    });
   } catch (error) {
+    logCampaignGenerationError(error);
+
     if (error instanceof CampaignGenerationError) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
