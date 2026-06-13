@@ -1,6 +1,21 @@
 import { CampaignGeneratorForm } from "@/components/forms/campaign-generator-form";
+import { requireCurrentUserId } from "@/lib/auth/authorization";
+import { prisma } from "@/lib/db/prisma";
 
-export default function NewCampaignPage() {
+export default async function NewCampaignPage() {
+  const userId = await requireCurrentUserId();
+
+  const brands = await prisma.brand.findMany({
+    where: { ownerId: userId },
+    select: {
+      id: true,
+      name: true,
+      industry: true,
+      toneOfVoice: true,
+    },
+    orderBy: { name: "asc" },
+  });
+
   return (
     <div className="flex flex-col gap-6">
       <section className="rounded-[2rem] border border-border/80 bg-card/75 p-6 shadow-sm sm:p-8">
@@ -17,7 +32,7 @@ export default function NewCampaignPage() {
         </p>
       </section>
 
-      <CampaignGeneratorForm />
+      <CampaignGeneratorForm brands={brands} />
     </div>
   );
 }

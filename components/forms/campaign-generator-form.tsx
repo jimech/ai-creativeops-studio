@@ -11,12 +11,12 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
-const brands = [
-  "Lumiere Atelier",
-  "Aster Jewelry",
-  "Velvet Skin Co.",
-  "Maison Field Notes",
-];
+export type CampaignBrandOption = {
+  id: string;
+  name: string;
+  industry: string;
+  toneOfVoice: string | null;
+};
 
 const platforms = ["Instagram", "TikTok", "Email", "Paid social", "Pinterest"];
 
@@ -84,38 +84,45 @@ const calendarIdeas = [
   "Friday: visual direction post with image prompt-inspired stills.",
 ];
 
-export function CampaignGeneratorForm() {
+export function CampaignGeneratorForm({
+  brands,
+}: {
+  brands: CampaignBrandOption[];
+}) {
+  const hasBrands = brands.length > 0;
+
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_24rem] xl:items-start">
       <div className="flex min-w-0 flex-col gap-6">
-        <form className="flex flex-col gap-6">
-          <Card className="border-border/80 bg-card/75 shadow-sm [--card-spacing:--spacing(6)]">
-            <CardHeader>
-              <Badge variant="outline" className="w-fit bg-background/60">
-                Campaign brief
-              </Badge>
-              <CardTitle className="font-heading text-3xl tracking-[-0.03em]">
-                Tell the studio what you want to create.
-              </CardTitle>
-              <CardDescription className="max-w-2xl text-base leading-7">
-                Use static mock inputs to shape campaign concepts, captions,
-                hooks, and visual direction. No AI request is sent yet.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-5">
-              <div className="grid gap-4 md:grid-cols-2">
-                <Field label="Brand" htmlFor="brand">
-                  <Select id="brand" name="brand" defaultValue="">
-                    <option value="" disabled>
-                      Select a mock brand
-                    </option>
-                    {brands.map((brand) => (
-                      <option key={brand} value={brand}>
-                        {brand}
+        {hasBrands ? (
+          <form className="flex flex-col gap-6">
+            <Card className="border-border/80 bg-card/75 shadow-sm [--card-spacing:--spacing(6)]">
+              <CardHeader>
+                <Badge variant="outline" className="w-fit bg-background/60">
+                  Campaign brief
+                </Badge>
+                <CardTitle className="font-heading text-3xl tracking-[-0.03em]">
+                  Tell the studio what you want to create.
+                </CardTitle>
+                <CardDescription className="max-w-2xl text-base leading-7">
+                  Use static mock inputs to shape campaign concepts, captions,
+                  hooks, and visual direction. No AI request is sent yet.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-5">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Field label="Brand" htmlFor="brand">
+                    <Select id="brand" name="brand" defaultValue="" required>
+                      <option value="" disabled>
+                        Select a brand
                       </option>
-                    ))}
-                  </Select>
-                </Field>
+                      {brands.map((brand) => (
+                        <option key={brand.id} value={brand.id}>
+                          {brand.name}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
                 <Field label="Campaign goal" htmlFor="campaign-goal">
                   <Input
                     id="campaign-goal"
@@ -264,7 +271,29 @@ export function CampaignGeneratorForm() {
               </Button>
             </div>
           </div>
-        </form>
+          </form>
+        ) : (
+          <Card className="border-border/80 bg-card/75 shadow-sm [--card-spacing:--spacing(6)]">
+            <CardHeader>
+              <Badge variant="outline" className="w-fit bg-background/60">
+                Brand required
+              </Badge>
+              <CardTitle className="font-heading text-3xl tracking-[-0.03em]">
+                Create a brand profile first
+              </CardTitle>
+              <CardDescription className="max-w-2xl text-base leading-7">
+                Campaign generation needs brand context before you can build a
+                brief. Add your brand name, industry, voice, and visual notes to
+                get started.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild className="rounded-full">
+                <Link href="/dashboard/brands/new">Create brand profile</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         <StaticOutputPreview />
       </div>
@@ -334,8 +363,8 @@ export function CampaignGeneratorForm() {
               Static UI only
             </CardTitle>
             <CardDescription className="leading-6">
-              This screen does not call OpenAI, save campaigns, or use a
-              database. Later tickets will connect the generator workflow.
+              Brand options come from your saved profiles. This screen does not
+              call OpenAI or save campaigns yet.
             </CardDescription>
           </CardHeader>
         </Card>
