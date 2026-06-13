@@ -1,5 +1,10 @@
-import Link from "next/link";
+"use client";
 
+import Link from "next/link";
+import { useActionState } from "react";
+
+import { createBrand } from "@/app/dashboard/brands/new/actions";
+import type { CreateBrandState } from "@/lib/validators/brand";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -49,30 +54,51 @@ const nextSteps = [
 ];
 
 export function BrandOnboardingForm() {
+  const [state, formAction, isPending] = useActionState(
+    createBrand,
+    {} satisfies CreateBrandState,
+  );
+
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem] xl:items-start">
-      <form className="flex min-w-0 flex-col gap-6">
+      <form action={formAction} className="flex min-w-0 flex-col gap-6">
+        {state.message ? (
+          <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {state.message}
+          </div>
+        ) : null}
+
         <OnboardingSection
           eyebrow="Brand basics"
           title="Start with the essentials."
           description="These details frame the brand before campaign ideas are generated."
         >
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Brand name" htmlFor="brand-name">
+            <Field
+              label="Brand name"
+              htmlFor="name"
+              error={state.errors?.name?.[0]}
+            >
               <Input
-                id="brand-name"
-                name="brand-name"
+                id="name"
+                name="name"
                 placeholder="Lumiere Atelier"
                 required
+                aria-invalid={!!state.errors?.name}
               />
             </Field>
-            <Field label="Industry" htmlFor="industry">
+            <Field
+              label="Industry"
+              htmlFor="industry"
+              error={state.errors?.industry?.[0]}
+            >
               <select
                 id="industry"
                 name="industry"
                 defaultValue=""
-                className="h-10 w-full rounded-xl border border-input bg-background/70 px-3 text-sm text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                className="h-10 w-full rounded-xl border border-input bg-background/70 px-3 text-sm text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive"
                 required
+                aria-invalid={!!state.errors?.industry}
               >
                 <option value="" disabled>
                   Select an industry
@@ -85,10 +111,13 @@ export function BrandOnboardingForm() {
               </select>
             </Field>
           </div>
-          <Field label="Website or Instagram handle" htmlFor="brand-url">
+          <Field
+            label="Website or Instagram handle"
+            htmlFor="brand-url"
+            hint="UI only for now. Not saved to the database yet."
+          >
             <Input
               id="brand-url"
-              name="brand-url"
               placeholder="@lumiereatelier or https://lumiere.example"
             />
           </Field>
@@ -100,16 +129,14 @@ export function BrandOnboardingForm() {
           description="Voice context helps the studio keep captions, hooks, and creative direction aligned."
         >
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label="Tone of voice" htmlFor="tone">
+            <Field label="Tone of voice" htmlFor="toneOfVoice">
               <select
-                id="tone"
-                name="tone"
+                id="toneOfVoice"
+                name="toneOfVoice"
                 defaultValue=""
                 className="h-10 w-full rounded-xl border border-input bg-background/70 px-3 text-sm text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
               >
-                <option value="" disabled>
-                  Choose a tone
-                </option>
+                <option value="">Choose a tone</option>
                 {tones.map((tone) => (
                   <option key={tone} value={tone}>
                     {tone}
@@ -117,18 +144,21 @@ export function BrandOnboardingForm() {
                 ))}
               </select>
             </Field>
-            <Field label="Target audience" htmlFor="target-audience">
+            <Field label="Target audience" htmlFor="targetAudience">
               <Input
-                id="target-audience"
-                name="target-audience"
+                id="targetAudience"
+                name="targetAudience"
                 placeholder="Style-conscious founders, editors, and collectors"
               />
             </Field>
           </div>
-          <Field label="Brand description" htmlFor="brand-description">
+          <Field
+            label="Brand description"
+            htmlFor="brand-description"
+            hint="UI only for now. Not saved to the database yet."
+          >
             <textarea
               id="brand-description"
-              name="brand-description"
               rows={5}
               placeholder="Describe the brand's world, point of view, customer, and creative standards."
               className="w-full resize-none rounded-2xl border border-input bg-background/70 px-3 py-3 text-sm leading-6 text-foreground outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
@@ -142,24 +172,31 @@ export function BrandOnboardingForm() {
           description="Use simple lists for now. The MVP can turn these notes into visual prompts later."
         >
           <div className="grid gap-4 md:grid-cols-3">
-            <Field label="Brand colors" htmlFor="brand-colors">
+            <Field
+              label="Brand colors"
+              htmlFor="colors"
+              hint="Comma-separated values."
+            >
               <Input
-                id="brand-colors"
-                name="brand-colors"
+                id="colors"
+                name="colors"
                 placeholder="Ivory, cocoa, muted rose"
               />
             </Field>
-            <Field label="Fonts" htmlFor="fonts">
+            <Field label="Fonts" htmlFor="fonts" hint="Comma-separated values.">
               <Input
                 id="fonts"
                 name="fonts"
                 placeholder="Editorial serif, clean sans"
               />
             </Field>
-            <Field label="Style keywords" htmlFor="style-keywords">
+            <Field
+              label="Style keywords"
+              htmlFor="style-keywords"
+              hint="UI only for now. Not saved to the database yet."
+            >
               <Input
                 id="style-keywords"
-                name="style-keywords"
                 placeholder="Quiet luxury, tactile, minimal"
               />
             </Field>
@@ -169,28 +206,19 @@ export function BrandOnboardingForm() {
         <OnboardingSection
           eyebrow="Product context"
           title="Add the product details campaigns need."
-          description="This helps future campaign ideas stay grounded in what the brand actually sells."
+          description="This section is UI-only for now. Product fields are not saved to the database yet."
         >
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="Main product name" htmlFor="product-name">
-              <Input
-                id="product-name"
-                name="product-name"
-                placeholder="The Soft Structure Tote"
-              />
+              <Input id="product-name" placeholder="The Soft Structure Tote" />
             </Field>
             <Field label="Price range" htmlFor="price-range">
-              <Input
-                id="price-range"
-                name="price-range"
-                placeholder="$150 - $350"
-              />
+              <Input id="price-range" placeholder="$150 - $350" />
             </Field>
           </div>
           <Field label="Product description" htmlFor="product-description">
             <textarea
               id="product-description"
-              name="product-description"
               rows={4}
               placeholder="Summarize materials, benefits, use cases, customer motivations, and what makes the product distinct."
               className="w-full resize-none rounded-2xl border border-input bg-background/70 px-3 py-3 text-sm leading-6 text-foreground outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
@@ -227,8 +255,8 @@ export function BrandOnboardingForm() {
             <Button type="button" variant="outline" className="rounded-full">
               Save as draft
             </Button>
-            <Button type="button" className="rounded-full">
-              Save brand profile
+            <Button type="submit" className="rounded-full" disabled={isPending}>
+              {isPending ? "Saving brand profile..." : "Save brand profile"}
             </Button>
           </div>
         </div>
@@ -286,7 +314,7 @@ export function BrandOnboardingForm() {
               What happens next
             </CardTitle>
             <CardDescription className="text-primary-foreground/75">
-              This is static UI for now. Later tickets will connect the workflow.
+              Saved brand profiles will appear in your dashboard workflow.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -334,10 +362,14 @@ function OnboardingSection({
 function Field({
   label,
   htmlFor,
+  hint,
+  error,
   children,
 }: {
   label: string;
   htmlFor: string;
+  hint?: string;
+  error?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -346,6 +378,12 @@ function Field({
         {label}
       </span>
       {children}
+      {hint ? (
+        <span className="text-xs leading-5 text-muted-foreground">{hint}</span>
+      ) : null}
+      {error ? (
+        <span className="text-xs leading-5 text-destructive">{error}</span>
+      ) : null}
     </label>
   );
 }
