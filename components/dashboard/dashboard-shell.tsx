@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -116,6 +117,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                     </p>
                   </div>
                 </div>
+                <SignOutButton />
                 <Button asChild className="rounded-full">
                   <Link href="/dashboard/campaigns/new">New campaign</Link>
                 </Button>
