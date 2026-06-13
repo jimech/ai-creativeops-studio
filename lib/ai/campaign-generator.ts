@@ -5,7 +5,7 @@
 
 import "server-only";
 
-import OpenAI from "openai";
+import OpenAI, { APIError } from "openai";
 import { z } from "zod";
 
 export type BrandContext = {
@@ -60,6 +60,71 @@ const campaignGenerationResultSchema = z.object({
 });
 
 const DEFAULT_MODEL = "gpt-4o-mini";
+
+function isMockGenerationMode(): boolean {
+  return process.env.AI_GENERATION_MODE === "mock";
+}
+
+function assertMockModeNotInProduction(): void {
+  if (isMockGenerationMode() && process.env.NODE_ENV === "production") {
+    throw new CampaignGenerationError(
+      "AI_GENERATION_MODE is set to mock in production. Remove mock mode or configure real OpenAI generation.",
+    );
+  }
+}
+
+function canUseMockGenerationMode(): boolean {
+  return isMockGenerationMode() && process.env.NODE_ENV !== "production";
+}
+
+function generateMockCampaignIdeas(
+  input: GenerateCampaignIdeasInput,
+): CampaignGenerationResult {
+  const { brand, brief } = input;
+  const tone = brief.desiredTone ?? brand.toneOfVoice ?? "editorial and refined";
+  const audience =
+    brief.audience ?? brand.targetAudience ?? "style-conscious customers";
+  const product = brief.productOrOffer ?? "signature offer";
+  const campaignType = brief.campaignType ?? "brand campaign";
+  const keyMessage =
+    brief.keyMessage ?? `Highlight why ${brand.name} matters now.`;
+  const colorNote = brand.colors?.length
+    ? brand.colors.join(", ")
+    : "neutral palette";
+
+  return {
+    campaignConcepts: [
+      `${brand.name} ${campaignType}: A ${tone.toLowerCase()} ${brief.platform} rollout focused on ${brief.campaignGoal}.`,
+      `The ${brand.industry} Edit: Position ${product} as the centerpiece of a calm, premium launch story.`,
+      `${keyMessage} Translate the brief into a cohesive creative direction for ${audience}.`,
+    ],
+    captions: [
+      `Introducing the next chapter for ${brand.name}: ${brief.campaignGoal}.`,
+      `Built for ${audience}, ${product} brings ${tone.toLowerCase()} energy to ${brief.platform}.`,
+      `${brand.name} in ${colorNote} tones — crafted for a slower, more intentional launch moment.`,
+    ],
+    adHooks: [
+      `The ${brief.platform} campaign ${brand.name} needs for ${brief.campaignGoal}.`,
+      `Turn ${product} into a polished creative angle in minutes.`,
+      `For ${audience} who expect ${tone.toLowerCase()} brand storytelling.`,
+    ],
+    imagePrompts: [
+      `${colorNote} backdrop, soft editorial light, ${brand.industry} product detail, restrained luxury styling.`,
+      `Minimal studio set for ${brand.name}, tactile textures, premium still life, quiet composition.`,
+      `${brief.platform} hero visual for ${product}, founder-led mood, clean sans-serif typography.`,
+    ],
+    videoIdeas: [
+      `Three-shot ritual sequence introducing ${product} with ${tone.toLowerCase()} voiceover.`,
+      `Founder note explaining ${brief.campaignGoal} over slow product close-ups.`,
+      `${brief.platform} styling reel: detail, use moment, final editorial frame for ${brand.name}.`,
+    ],
+    contentCalendarIdeas: [
+      `Day 1: Reveal ${campaignType} concept with a short founder note.`,
+      `Day 3: Product education post featuring ${product} proof points for ${audience}.`,
+      `Day 5: Visual direction carousel inspired by ${colorNote} brand cues.`,
+    ],
+  };
+}
 
 function getOpenAIClient(): OpenAI {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -170,16 +235,75 @@ function validateGenerationResult(payload: unknown): CampaignGenerationResult {
   return parsed.data;
 }
 
+function mapOpenAIErrorMessage(error: APIError): string {
+  if (error.code === "insufficient_quota") {
+    return "OpenAI quota exceeded. Add billing or credits to your OpenAI account, then try again.";
+  }
+
+  if (error.status === 401) {
+    return "OpenAI authentication failed. Check OPENAI_API_KEY configuration.";
+  }
+
+  if (error.status === 429) {
+    return "OpenAI rate limit reached. Please wait and try again.";
+  }
+
+  return "OpenAI could not generate campaign ideas. Please try again.";
+}
+
+export function logCampaignGenerationError(error: unknown): void {
+  if (process.env.NODE_ENV === "production") {
+    return;
+  }
+
+  if (error instanceof CampaignGenerationError) {
+    console.error("[campaign-generation]", {
+      name: error.name,
+      message: error.message,
+      cause:
+        error.cause instanceof APIError
+          ? {
+              name: error.cause.name,
+              message: error.cause.message,
+              status: error.cause.status,
+              code: error.cause.code,
+              type: error.cause.type,
+            }
+          : error.cause instanceof Error
+            ? { name: error.cause.name, message: error.cause.message }
+            : undefined,
+    });
+    return;
+  }
+
+  if (error instanceof APIError) {
+    console.error("[campaign-generation]", {
+      name: error.name,
+      message: error.message,
+      status: error.status,
+      code: error.code,
+      type: error.type,
+    });
+    return;
+  }
+
+  if (error instanceof Error) {
+    console.error("[campaign-generation]", {
+      name: error.name,
+      message: error.message,
+    });
+  }
+}
+
 function toCampaignGenerationError(error: unknown): CampaignGenerationError {
   if (error instanceof CampaignGenerationError) {
     return error;
   }
 
-  if (error instanceof OpenAI.APIError) {
-    return new CampaignGenerationError(
-      "OpenAI could not generate campaign ideas. Please try again.",
-      { cause: error },
-    );
+  if (error instanceof APIError) {
+    return new CampaignGenerationError(mapOpenAIErrorMessage(error), {
+      cause: error,
+    });
   }
 
   return new CampaignGenerationError(
@@ -191,6 +315,13 @@ function toCampaignGenerationError(error: unknown): CampaignGenerationError {
 export async function generateCampaignIdeas(
   input: GenerateCampaignIdeasInput,
 ): Promise<CampaignGenerationResult> {
+  assertMockModeNotInProduction();
+
+  if (canUseMockGenerationMode()) {
+    console.info("[campaign-generation] Using explicit mock generation mode.");
+    return generateMockCampaignIdeas(input);
+  }
+
   try {
     const client = getOpenAIClient();
     const response = await client.chat.completions.create({

@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useMemo, useState, type FormEvent } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import type { GenerateCampaignResponse } from "@/lib/validators/generate-campaign";
 
 export type CampaignBrandOption = {
   id: string;
@@ -51,51 +55,83 @@ const tips = [
   "Describe the visual feeling as if briefing a creative director.",
 ];
 
-const concepts = [
-  "The Quiet Launch Edit: a calm editorial rollout focused on craftsmanship, material detail, and slower purchase consideration.",
-  "Rituals Before Reach: a founder-led content story that frames the product as part of a more intentional daily routine.",
-];
-
-const captions = [
-  "A considered launch for the pieces that make everyday rituals feel more composed.",
-  "Meet the edit designed for softer mornings, sharper details, and a slower kind of luxury.",
-  "From first sketch to final styling note, this campaign starts with the brand story.",
-];
-
-const hooks = [
-  "The campaign direction your next launch needs before the first post is written.",
-  "Turn product context into a polished creative angle in minutes.",
-  "For brands that need agency-level thinking without agency overhead.",
-];
-
-const imagePrompts = [
-  "Warm ivory backdrop, low morning light, close crop product detail, restrained editorial styling.",
-  "Taupe studio set, soft shadow, textured paper, premium lifestyle still life, quiet composition.",
-];
-
-const videoIdeas = [
-  "Founder voiceover walking through the product ritual in three slow, tactile shots.",
-  "Short-form styling sequence: product detail, use moment, final editorial frame.",
-];
-
-const calendarIdeas = [
-  "Monday: campaign concept reveal with founder note.",
-  "Wednesday: product education carousel with proof points.",
-  "Friday: visual direction post with image prompt-inspired stills.",
-];
-
 export function CampaignGeneratorForm({
   brands,
 }: {
   brands: CampaignBrandOption[];
 }) {
   const hasBrands = brands.length > 0;
+  const [selectedBrandId, setSelectedBrandId] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<GenerateCampaignResponse | null>(null);
+
+  const selectedBrand = useMemo(
+    () => brands.find((brand) => brand.id === selectedBrandId) ?? brands[0],
+    [brands, selectedBrandId],
+  );
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsGenerating(true);
+    setError(null);
+
+    const formData = new FormData(event.currentTarget);
+    const payload = {
+      brandId: String(formData.get("brandId") ?? ""),
+      campaignGoal: String(formData.get("campaignGoal") ?? ""),
+      platform: String(formData.get("platform") ?? ""),
+      campaignType: getOptionalValue(formData.get("campaignType")),
+      productOrOffer: getOptionalValue(formData.get("productOrOffer")),
+      audience: getOptionalValue(formData.get("audience")),
+      keyMessage: getOptionalValue(formData.get("keyMessage")),
+      desiredTone: getOptionalValue(formData.get("desiredTone")),
+      timeline: getOptionalValue(formData.get("timeline")),
+      additionalNotes: getOptionalValue(formData.get("additionalNotes")),
+    };
+
+    try {
+      const response = await fetch("/api/campaigns/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data: GenerateCampaignResponse | { error?: string } =
+        await response.json();
+
+      if (!response.ok) {
+        setResult(null);
+        setError(
+          "error" in data && data.error
+            ? data.error
+            : "Campaign generation failed. Please try again.",
+        );
+        return;
+      }
+
+      setResult(data as GenerateCampaignResponse);
+    } catch {
+      setResult(null);
+      setError("Campaign generation failed. Please try again.");
+    } finally {
+      setIsGenerating(false);
+    }
+  }
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_24rem] xl:items-start">
       <div className="flex min-w-0 flex-col gap-6">
         {hasBrands ? (
-          <form className="flex flex-col gap-6">
+          <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+            {error ? (
+              <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                {error}
+              </div>
+            ) : null}
+
             <Card className="border-border/80 bg-card/75 shadow-sm [--card-spacing:--spacing(6)]">
               <CardHeader>
                 <Badge variant="outline" className="w-fit bg-background/60">
@@ -105,14 +141,22 @@ export function CampaignGeneratorForm({
                   Tell the studio what you want to create.
                 </CardTitle>
                 <CardDescription className="max-w-2xl text-base leading-7">
-                  Use static mock inputs to shape campaign concepts, captions,
-                  hooks, and visual direction. No AI request is sent yet.
+                  Submit your brief to generate campaign concepts, captions,
+                  hooks, and visual direction from your saved brand context.
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col gap-5">
                 <div className="grid gap-4 md:grid-cols-2">
-                  <Field label="Brand" htmlFor="brand">
-                    <Select id="brand" name="brand" defaultValue="" required>
+                  <Field label="Brand" htmlFor="brandId">
+                    <Select
+                      id="brandId"
+                      name="brandId"
+                      defaultValue=""
+                      required
+                      onChange={(event) =>
+                        setSelectedBrandId(event.currentTarget.value)
+                      }
+                    >
                       <option value="" disabled>
                         Select a brand
                       </option>
@@ -123,154 +167,167 @@ export function CampaignGeneratorForm({
                       ))}
                     </Select>
                   </Field>
-                <Field label="Campaign goal" htmlFor="campaign-goal">
-                  <Input
-                    id="campaign-goal"
-                    name="campaign-goal"
-                    placeholder="Launch a new summer collection"
-                    required
-                  />
-                </Field>
-              </div>
+                  <Field label="Campaign goal" htmlFor="campaignGoal">
+                    <Input
+                      id="campaignGoal"
+                      name="campaignGoal"
+                      placeholder="Launch a new summer collection"
+                      required
+                    />
+                  </Field>
+                </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <Field label="Platform" htmlFor="platform">
-                  <Select id="platform" name="platform" defaultValue="">
-                    <option value="" disabled>
-                      Choose a platform
-                    </option>
-                    {platforms.map((platform) => (
-                      <option key={platform} value={platform}>
-                        {platform}
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Field label="Platform" htmlFor="platform">
+                    <Select id="platform" name="platform" defaultValue="" required>
+                      <option value="" disabled>
+                        Choose a platform
                       </option>
-                    ))}
-                  </Select>
-                </Field>
-                <Field label="Campaign type" htmlFor="campaign-type">
-                  <Select id="campaign-type" name="campaign-type" defaultValue="">
-                    <option value="" disabled>
-                      Choose a campaign type
-                    </option>
-                    {campaignTypes.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-              </div>
+                      {platforms.map((platform) => (
+                        <option key={platform} value={platform}>
+                          {platform}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                  <Field label="Campaign type" htmlFor="campaignType">
+                    <Select
+                      id="campaignType"
+                      name="campaignType"
+                      defaultValue=""
+                    >
+                      <option value="">Choose a campaign type</option>
+                      {campaignTypes.map((type) => (
+                        <option key={type} value={type}>
+                          {type}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <Field label="Product or offer" htmlFor="product-offer">
-                  <Input
-                    id="product-offer"
-                    name="product-offer"
-                    placeholder="The Soft Structure Tote"
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Field label="Product or offer" htmlFor="productOrOffer">
+                    <Input
+                      id="productOrOffer"
+                      name="productOrOffer"
+                      placeholder="The Soft Structure Tote"
+                    />
+                  </Field>
+                  <Field label="Target audience" htmlFor="audience">
+                    <Input
+                      id="audience"
+                      name="audience"
+                      placeholder="Style-conscious founders and editors"
+                    />
+                  </Field>
+                </div>
+
+                <Field label="Key message" htmlFor="keyMessage">
+                  <textarea
+                    id="keyMessage"
+                    name="keyMessage"
+                    rows={4}
+                    placeholder="Explain the main idea the campaign should communicate."
+                    className="w-full resize-none rounded-2xl border border-input bg-background/70 px-3 py-3 text-sm leading-6 text-foreground outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                   />
                 </Field>
-                <Field label="Target audience" htmlFor="audience">
-                  <Input
-                    id="audience"
-                    name="audience"
-                    placeholder="Style-conscious founders and editors"
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Field label="Desired tone" htmlFor="desiredTone">
+                    <Select
+                      id="desiredTone"
+                      name="desiredTone"
+                      defaultValue=""
+                    >
+                      <option value="">Choose a tone</option>
+                      {tones.map((tone) => (
+                        <option key={tone} value={tone}>
+                          {tone}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                  <Field label="Launch date or timeline" htmlFor="timeline">
+                    <Input
+                      id="timeline"
+                      name="timeline"
+                      placeholder="Late June launch, two-week rollout"
+                    />
+                  </Field>
+                </div>
+
+                <Field label="Additional notes" htmlFor="additionalNotes">
+                  <textarea
+                    id="additionalNotes"
+                    name="additionalNotes"
+                    rows={4}
+                    placeholder="Add must-use phrases, creative references, exclusions, or internal context."
+                    className="w-full resize-none rounded-2xl border border-input bg-background/70 px-3 py-3 text-sm leading-6 text-foreground outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                   />
                 </Field>
-              </div>
+              </CardContent>
+            </Card>
 
-              <Field label="Key message" htmlFor="key-message">
-                <textarea
-                  id="key-message"
-                  name="key-message"
-                  rows={4}
-                  placeholder="Explain the main idea the campaign should communicate."
-                  className="w-full resize-none rounded-2xl border border-input bg-background/70 px-3 py-3 text-sm leading-6 text-foreground outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                />
-              </Field>
+            <Card className="border-border/80 bg-card/75 shadow-sm [--card-spacing:--spacing(6)]">
+              <CardHeader>
+                <Badge variant="secondary" className="w-fit">
+                  Output options
+                </Badge>
+                <CardTitle className="font-heading text-3xl tracking-[-0.03em]">
+                  Choose what the generated preview should include.
+                </CardTitle>
+                <CardDescription>
+                  These controls are UI-only for now. Generation includes the
+                  full campaign output set.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-3 md:grid-cols-2">
+                {outputOptions.map((option, index) => (
+                  <label
+                    key={option}
+                    className="flex cursor-pointer items-start gap-3 rounded-3xl border border-border/75 bg-background/65 p-4"
+                  >
+                    <input
+                      type="checkbox"
+                      defaultChecked={index < 4}
+                      className="mt-1 size-4 accent-primary"
+                    />
+                    <span>
+                      <span className="block font-heading text-xl font-semibold">
+                        {option}
+                      </span>
+                      <span className="mt-1 block text-sm leading-6 text-muted-foreground">
+                        Include {option.toLowerCase()} in the generated campaign
+                        preview.
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </CardContent>
+            </Card>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <Field label="Desired tone" htmlFor="desired-tone">
-                  <Select id="desired-tone" name="desired-tone" defaultValue="">
-                    <option value="" disabled>
-                      Choose a tone
-                    </option>
-                    {tones.map((tone) => (
-                      <option key={tone} value={tone}>
-                        {tone}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-                <Field label="Launch date or timeline" htmlFor="timeline">
-                  <Input
-                    id="timeline"
-                    name="timeline"
-                    placeholder="Late June launch, two-week rollout"
-                  />
-                </Field>
-              </div>
-
-              <Field label="Additional notes" htmlFor="additional-notes">
-                <textarea
-                  id="additional-notes"
-                  name="additional-notes"
-                  rows={4}
-                  placeholder="Add must-use phrases, creative references, exclusions, or internal context."
-                  className="w-full resize-none rounded-2xl border border-input bg-background/70 px-3 py-3 text-sm leading-6 text-foreground outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                />
-              </Field>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border/80 bg-card/75 shadow-sm [--card-spacing:--spacing(6)]">
-            <CardHeader>
-              <Badge variant="secondary" className="w-fit">
-                Output options
-              </Badge>
-              <CardTitle className="font-heading text-3xl tracking-[-0.03em]">
-                Choose what the static preview should include.
-              </CardTitle>
-              <CardDescription>
-                These controls are UI-only placeholders for the future generator.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-3 md:grid-cols-2">
-              {outputOptions.map((option, index) => (
-                <label
-                  key={option}
-                  className="flex cursor-pointer items-start gap-3 rounded-3xl border border-border/75 bg-background/65 p-4"
+            <div className="flex flex-col-reverse gap-3 rounded-3xl border border-border/80 bg-card/70 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <Button
+                asChild
+                variant="outline"
+                className="rounded-full bg-background/60"
+              >
+                <Link href="/dashboard">Cancel</Link>
+              </Button>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Button type="button" variant="outline" className="rounded-full">
+                  Save draft
+                </Button>
+                <Button
+                  type="submit"
+                  className="rounded-full"
+                  disabled={isGenerating}
                 >
-                  <input
-                    type="checkbox"
-                    defaultChecked={index < 4}
-                    className="mt-1 size-4 accent-primary"
-                  />
-                  <span>
-                    <span className="block font-heading text-xl font-semibold">
-                      {option}
-                    </span>
-                    <span className="mt-1 block text-sm leading-6 text-muted-foreground">
-                      Include {option.toLowerCase()} in the generated campaign
-                      preview.
-                    </span>
-                  </span>
-                </label>
-              ))}
-            </CardContent>
-          </Card>
-
-          <div className="flex flex-col-reverse gap-3 rounded-3xl border border-border/80 bg-card/70 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <Button asChild variant="outline" className="rounded-full bg-background/60">
-              <Link href="/dashboard">Cancel</Link>
-            </Button>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Button type="button" variant="outline" className="rounded-full">
-                Save draft
-              </Button>
-              <Button type="button" className="rounded-full">
-                Generate campaign
-              </Button>
+                  {isGenerating ? "Generating campaign..." : "Generate campaign"}
+                </Button>
+              </div>
             </div>
-          </div>
           </form>
         ) : (
           <Card className="border-border/80 bg-card/75 shadow-sm [--card-spacing:--spacing(6)]">
@@ -295,7 +352,23 @@ export function CampaignGeneratorForm({
           </Card>
         )}
 
-        <StaticOutputPreview />
+        {result ? (
+          <GeneratedOutputPreview result={result} />
+        ) : (
+          <Card className="border-border/80 bg-card/75 shadow-sm [--card-spacing:--spacing(6)]">
+            <CardHeader>
+              <Badge variant="outline" className="w-fit bg-background/60">
+                Campaign preview
+              </Badge>
+              <CardTitle className="font-heading text-3xl tracking-[-0.03em]">
+                Generated output will appear here
+              </CardTitle>
+              <CardDescription>
+                Submit your brief to generate and save a campaign preview.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        )}
       </div>
 
       <aside className="flex flex-col gap-4 xl:sticky xl:top-6">
@@ -305,19 +378,25 @@ export function CampaignGeneratorForm({
               Selected brand
             </Badge>
             <CardTitle className="font-heading text-2xl">
-              Lumiere Atelier
+              {selectedBrand?.name ?? "Select a brand"}
             </CardTitle>
             <CardDescription>
-              Mock brand profile for a refined fashion and lifestyle label.
+              {selectedBrand
+                ? `${selectedBrand.industry}${selectedBrand.toneOfVoice ? ` · ${selectedBrand.toneOfVoice}` : ""}`
+                : "Choose a saved brand profile to shape the campaign brief."}
             </CardDescription>
           </CardHeader>
-          <CardContent className="grid grid-cols-2 gap-3">
-            {["Fashion", "Editorial", "Warm", "Minimal"].map((tag) => (
-              <Badge key={tag} variant="secondary" className="justify-center">
-                {tag}
-              </Badge>
-            ))}
-          </CardContent>
+          {selectedBrand ? (
+            <CardContent className="grid grid-cols-2 gap-3">
+              {[selectedBrand.industry, "Brand context", "Saved profile"].map(
+                (tag) => (
+                  <Badge key={tag} variant="secondary" className="justify-center">
+                    {tag}
+                  </Badge>
+                ),
+              )}
+            </CardContent>
+          ) : null}
         </Card>
 
         <Card className="border-border/80 bg-primary text-primary-foreground shadow-sm [--card-spacing:--spacing(5)]">
@@ -326,13 +405,13 @@ export function CampaignGeneratorForm({
               AI usage preview
             </CardTitle>
             <CardDescription className="text-primary-foreground/75">
-              Static usage estimate for future plan limits.
+              Usage tracking and plan limits will be added in a later ticket.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="font-heading text-4xl font-semibold">1</p>
             <p className="mt-2 text-sm text-primary-foreground/75">
-              generation would be used when this becomes connected.
+              generation is used when you create a campaign.
             </p>
           </CardContent>
         </Card>
@@ -360,11 +439,11 @@ export function CampaignGeneratorForm({
         <Card className="border-border/80 bg-card/75 shadow-sm [--card-spacing:--spacing(5)]">
           <CardHeader>
             <CardTitle className="font-heading text-2xl">
-              Static UI only
+              Saved campaigns
             </CardTitle>
             <CardDescription className="leading-6">
-              Brand options come from your saved profiles. This screen does not
-              call OpenAI or save campaigns yet.
+              Successful generations are saved automatically and linked to your
+              selected brand.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -373,28 +452,38 @@ export function CampaignGeneratorForm({
   );
 }
 
-function StaticOutputPreview() {
+function GeneratedOutputPreview({
+  result,
+}: {
+  result: GenerateCampaignResponse;
+}) {
+  const previewTitle =
+    result.campaignConcepts[0] ?? "Generated campaign preview";
+
   return (
     <Card className="border-border/80 bg-card/75 shadow-sm [--card-spacing:--spacing(6)]">
       <CardHeader>
         <Badge variant="outline" className="w-fit bg-background/60">
-          Static sample output
+          Generated output
         </Badge>
         <CardTitle className="font-heading text-3xl tracking-[-0.03em]">
-          Campaign preview: The Quiet Launch Edit
+          {previewTitle}
         </CardTitle>
         <CardDescription>
-          Example output only. This preview is hard-coded for the MVP design
-          ticket.
+          Campaign saved successfully. Review the generated concepts, captions,
+          hooks, and visual direction below.
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 xl:grid-cols-2">
-        <OutputGroup title="Campaign concepts" items={concepts} />
-        <OutputGroup title="Captions" items={captions} />
-        <OutputGroup title="Ad hooks" items={hooks} />
-        <OutputGroup title="Image prompts" items={imagePrompts} />
-        <OutputGroup title="Video ideas" items={videoIdeas} />
-        <OutputGroup title="Content calendar ideas" items={calendarIdeas} />
+        <OutputGroup title="Campaign concepts" items={result.campaignConcepts} />
+        <OutputGroup title="Captions" items={result.captions} />
+        <OutputGroup title="Ad hooks" items={result.adHooks} />
+        <OutputGroup title="Image prompts" items={result.imagePrompts} />
+        <OutputGroup title="Video ideas" items={result.videoIdeas} />
+        <OutputGroup
+          title="Content calendar ideas"
+          items={result.contentCalendarIdeas}
+        />
       </CardContent>
     </Card>
   );
@@ -415,6 +504,11 @@ function OutputGroup({ title, items }: { title: string; items: string[] }) {
       </ul>
     </div>
   );
+}
+
+function getOptionalValue(value: FormDataEntryValue | null) {
+  const trimmed = String(value ?? "").trim();
+  return trimmed || undefined;
 }
 
 function Field({

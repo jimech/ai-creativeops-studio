@@ -24,3 +24,16 @@ export const generateCampaignRequestSchema = z.object({
 export type GenerateCampaignRequest = z.infer<
   typeof generateCampaignRequestSchema
 >;
+
+export type CampaignGenerationOutput = {
+  campaignConcepts: string[];
+  captions: string[];
+  adHooks: string[];
+  imagePrompts: string[];
+  videoIdeas: string[];
+  contentCalendarIdeas: string[];
+};
+
+export type GenerateCampaignResponse = CampaignGenerationOutput & {
+  campaignId: string;
+};
