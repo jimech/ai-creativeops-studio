@@ -7,7 +7,10 @@ import {
   type CampaignGenerationResult,
 } from "@/lib/ai/campaign-generator";
 import { getCurrentUserId } from "@/lib/auth/authorization";
-import { CampaignStatus } from "@/lib/db/generated/prisma/client";
+import {
+  AiUsageActionType,
+  CampaignStatus,
+} from "@/lib/db/generated/prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { generateCampaignRequestSchema } from "@/lib/validators/generate-campaign";
 
@@ -90,7 +93,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const result = await generateCampaignIdeas({
+    const { result, generationMode, tokensUsed } = await generateCampaignIdeas({
       brand: {
         name: brand.name,
         industry: brand.industry,
@@ -112,29 +115,42 @@ export async function POST(request: Request) {
       },
     });
 
-    const campaign = await prisma.campaign.create({
-      data: {
-        brandId: brand.id,
-        title: buildCampaignTitle(campaignGoal, result),
-        goal: campaignGoal,
-        platform,
-        status: CampaignStatus.SAVED,
-        aiOutput: {
-          ...result,
-          brief: {
-            campaignType,
-            productOrOffer,
-            audience,
-            keyMessage,
-            desiredTone,
-            timeline,
-            additionalNotes,
+    const campaign = await prisma.$transaction(async (tx) => {
+      const createdCampaign = await tx.campaign.create({
+        data: {
+          brandId: brand.id,
+          title: buildCampaignTitle(campaignGoal, result),
+          goal: campaignGoal,
+          platform,
+          status: CampaignStatus.SAVED,
+          aiOutput: {
+            ...result,
+            brief: {
+              campaignType,
+              productOrOffer,
+              audience,
+              keyMessage,
+              desiredTone,
+              timeline,
+              additionalNotes,
+            },
+            generationMode,
           },
         },
-      },
-      select: {
-        id: true,
-      },
+        select: {
+          id: true,
+        },
+      });
+
+      await tx.aiUsage.create({
+        data: {
+          userId,
+          actionType: AiUsageActionType.GENERATE_CAMPAIGN,
+          tokensUsed,
+        },
+      });
+
+      return createdCampaign;
     });
 
     return NextResponse.json({
