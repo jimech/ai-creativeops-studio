@@ -27,8 +27,8 @@ export default async function NewCampaignPage() {
         </h2>
         <p className="mt-4 max-w-3xl text-base leading-8 text-muted-foreground">
           Generate campaign concepts, captions, hooks, and visual direction from
-          brand context. This screen is a static preview of the future generator
-          workflow.
+          your saved brand context. Completed runs are saved automatically to
+          your campaign library.
         </p>
       </section>
 
