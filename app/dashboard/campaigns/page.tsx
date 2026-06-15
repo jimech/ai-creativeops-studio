@@ -117,7 +117,12 @@ export default async function CampaignLibraryPage() {
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0 flex-1">
                       <CardTitle className="font-heading text-xl font-semibold">
-                        {campaign.title}
+                        <Link
+                          href={`/dashboard/campaigns/${campaign.id}`}
+                          className="hover:underline"
+                        >
+                          {campaign.title}
+                        </Link>
                       </CardTitle>
                       <CardDescription className="mt-1">
                         {campaign.brand.name}
