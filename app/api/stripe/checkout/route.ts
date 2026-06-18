@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getCurrentUserId } from "@/lib/auth/authorization";
+import { prisma } from "@/lib/db/prisma";
 import {
   getPriceIdForPlan,
   getStripe,
@@ -59,6 +60,11 @@ export async function POST(request: Request) {
   const stripe = getStripe();
   const appUrl = config.appUrl!;
 
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { stripeCustomerId: true, email: true },
+  });
+
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     line_items: [{ price: priceId, quantity: 1 }],
@@ -69,6 +75,17 @@ export async function POST(request: Request) {
       userId,
       plan: parsed.data.plan,
     },
+    subscription_data: {
+      metadata: {
+        userId,
+        plan: parsed.data.plan,
+      },
+    },
+    ...(user?.stripeCustomerId
+      ? { customer: user.stripeCustomerId }
+      : user?.email
+        ? { customer_email: user.email }
+        : {}),
   });
 
   if (!session.url) {
