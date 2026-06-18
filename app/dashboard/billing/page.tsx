@@ -21,6 +21,7 @@ const plans = [
     description:
       "For solo founders and small teams running regular campaign generation.",
     features: [
+      "100 AI campaign generations per month",
       "Unlimited brand profiles",
       "Campaign generation workspace",
       "Saved campaign library",
@@ -34,6 +35,7 @@ const plans = [
     description:
       "For agencies managing multiple client brands and higher campaign volume.",
     features: [
+      "500 AI campaign generations per month",
       "Everything in Pro",
       "Multi-brand operations",
       "Priority generation workflow",
@@ -113,11 +115,17 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
       </section>
 
       <section className="rounded-[2rem] border border-dashed border-border/80 bg-background/65 p-6 text-sm leading-6 text-muted-foreground">
-        <p className="font-medium text-foreground">Stripe test mode</p>
+        <p className="font-medium text-foreground">Monthly AI generation limits</p>
+        <ul className="mt-2 flex flex-col gap-1">
+          <li>Free: 3 generations per month</li>
+          <li>Pro: 100 generations per month</li>
+          <li>Agency: 500 generations per month</li>
+        </ul>
+        <p className="mt-4 font-medium text-foreground">Stripe test mode</p>
         <p className="mt-2">
           Use Stripe test-mode keys and price IDs in your local environment.
-          Successful checkout redirects back here; database subscription updates
-          will arrive in Ticket 28 via webhooks.
+          Successful checkout redirects back here; subscription updates sync via
+          Stripe webhooks.
         </p>
         <Button
           asChild

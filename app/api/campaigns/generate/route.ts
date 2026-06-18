@@ -6,6 +6,10 @@ import {
   logCampaignGenerationError,
   type CampaignGenerationResult,
 } from "@/lib/ai/campaign-generator";
+import {
+  assertCanGenerateCampaign,
+  UsageLimitExceededError,
+} from "@/lib/billing/usage-limits";
 import { getCurrentUserId } from "@/lib/auth/authorization";
 import {
   AiUsageActionType,
@@ -90,6 +94,25 @@ export async function POST(request: Request) {
 
   if (!brand) {
     return NextResponse.json({ error: "Brand not found." }, { status: 404 });
+  }
+
+  try {
+    await assertCanGenerateCampaign(userId);
+  } catch (error) {
+    if (error instanceof UsageLimitExceededError) {
+      return NextResponse.json(
+        {
+          error: error.message,
+          plan: error.plan,
+          limit: error.limit,
+          used: error.used,
+          resetAt: error.resetAt.toISOString(),
+        },
+        { status: 429 },
+      );
+    }
+
+    throw error;
   }
 
   try {
