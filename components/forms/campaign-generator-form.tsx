@@ -82,6 +82,8 @@ export function CampaignGeneratorForm({
   const [selectedBrandId, setSelectedBrandId] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorTitle, setErrorTitle] = useState<string | null>(null);
+  const [showUpgradeLink, setShowUpgradeLink] = useState(false);
   const [result, setResult] = useState<GenerateCampaignResponse | null>(null);
 
   const selectedBrand = useMemo(
@@ -93,6 +95,8 @@ export function CampaignGeneratorForm({
     event.preventDefault();
     setIsGenerating(true);
     setError(null);
+    setErrorTitle(null);
+    setShowUpgradeLink(false);
     setResult(null);
 
     const formData = new FormData(event.currentTarget);
@@ -118,11 +122,14 @@ export function CampaignGeneratorForm({
         body: JSON.stringify(payload),
       });
 
-      const data: GenerateCampaignResponse | { error?: string } =
+      const data: GenerateCampaignResponse | CampaignGenerationErrorResponse =
         await response.json();
 
       if (!response.ok) {
-        setError(getFriendlyErrorMessage(response.status, data));
+        const friendly = getFriendlyErrorMessage(response.status, data);
+        setError(friendly.message);
+        setErrorTitle(friendly.title);
+        setShowUpgradeLink(friendly.showUpgradeLink);
         return;
       }
 
@@ -146,8 +153,17 @@ export function CampaignGeneratorForm({
                 className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm leading-6 text-destructive"
                 role="alert"
               >
-                <p className="font-medium">Campaign generation failed</p>
+                <p className="font-medium">{errorTitle ?? "Campaign generation failed"}</p>
                 <p className="mt-1">{error}</p>
+                {showUpgradeLink ? (
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="mt-3 rounded-full border-destructive/30 bg-background/60 text-destructive hover:bg-destructive/10"
+                  >
+                    <Link href="/dashboard/billing">Upgrade plan</Link>
+                  </Button>
+                ) : null}
               </div>
             ) : null}
 
@@ -651,25 +667,81 @@ function OutputGroup({ title, items }: { title: string; items: string[] }) {
 
 function getFriendlyErrorMessage(
   status: number,
-  data: GenerateCampaignResponse | { error?: string },
-): string {
+  data: GenerateCampaignResponse | CampaignGenerationErrorResponse,
+): { title: string; message: string; showUpgradeLink: boolean } {
   if ("error" in data && data.error) {
-    return data.error;
+    if (status === 429 && "limit" in data && data.limit !== undefined) {
+      const resetLabel = data.resetAt
+        ? new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(
+            new Date(data.resetAt),
+          )
+        : "next month";
+
+      return {
+        title: "Monthly generation limit reached",
+        message: `You have used ${data.used ?? 0} of ${data.limit} AI generations on your ${formatPlanLabel(data.plan)} plan this month. Your limit resets on ${resetLabel}. Upgrade for more generations.`,
+        showUpgradeLink: true,
+      };
+    }
+
+    return {
+      title: "Campaign generation failed",
+      message: data.error,
+      showUpgradeLink: false,
+    };
   }
 
   if (status === 401) {
-    return "Please sign in again before generating a campaign.";
+    return {
+      title: "Campaign generation failed",
+      message: "Please sign in again before generating a campaign.",
+      showUpgradeLink: false,
+    };
   }
 
   if (status === 404) {
-    return "The selected brand could not be found. Choose another brand or refresh the page.";
+    return {
+      title: "Campaign generation failed",
+      message:
+        "The selected brand could not be found. Choose another brand or refresh the page.",
+      showUpgradeLink: false,
+    };
   }
 
   if (status === 400) {
-    return "Check the required fields — brand, campaign goal, and platform — then try again.";
+    return {
+      title: "Campaign generation failed",
+      message:
+        "Check the required fields — brand, campaign goal, and platform — then try again.",
+      showUpgradeLink: false,
+    };
   }
 
-  return "Something went wrong while generating your campaign. Please try again.";
+  return {
+    title: "Campaign generation failed",
+    message: "Something went wrong while generating your campaign. Please try again.",
+    showUpgradeLink: false,
+  };
+}
+
+type CampaignGenerationErrorResponse = {
+  error?: string;
+  plan?: string;
+  limit?: number;
+  used?: number;
+  resetAt?: string;
+};
+
+function formatPlanLabel(plan?: string): string {
+  if (plan === "PRO") {
+    return "Pro";
+  }
+
+  if (plan === "AGENCY") {
+    return "Agency";
+  }
+
+  return "Free";
 }
 
 function getOptionalValue(value: FormDataEntryValue | null) {
