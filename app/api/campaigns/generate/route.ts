@@ -8,6 +8,7 @@ import {
 } from "@/lib/ai/campaign-generator";
 import {
   assertCanGenerateCampaign,
+  assertCanGenerateCampaignInTransaction,
   UsageLimitExceededError,
 } from "@/lib/billing/usage-limits";
 import { getCurrentUserId } from "@/lib/auth/authorization";
@@ -16,6 +17,7 @@ import {
   CampaignStatus,
 } from "@/lib/db/generated/prisma/client";
 import { prisma } from "@/lib/db/prisma";
+import { checkGenerationRateLimit } from "@/lib/rate-limit";
 import { generateCampaignRequestSchema } from "@/lib/validators/generate-campaign";
 
 function buildCampaignTitle(
@@ -33,6 +35,19 @@ function buildCampaignTitle(
   return campaignGoal;
 }
 
+function usageLimitResponse(error: UsageLimitExceededError) {
+  return NextResponse.json(
+    {
+      error: error.message,
+      plan: error.plan,
+      limit: error.limit,
+      used: error.used,
+      resetAt: error.resetAt.toISOString(),
+    },
+    { status: 429 },
+  );
+}
+
 export async function POST(request: Request) {
   const userId = await getCurrentUserId();
 
@@ -40,6 +55,18 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { error: "Authentication required." },
       { status: 401 },
+    );
+  }
+
+  const rateLimit = checkGenerationRateLimit(request, userId);
+
+  if (!rateLimit.success) {
+    return NextResponse.json(
+      {
+        error:
+          "Too many generation requests. Please wait a moment and try again.",
+      },
+      { status: 429 },
     );
   }
 
@@ -100,16 +127,7 @@ export async function POST(request: Request) {
     await assertCanGenerateCampaign(userId);
   } catch (error) {
     if (error instanceof UsageLimitExceededError) {
-      return NextResponse.json(
-        {
-          error: error.message,
-          plan: error.plan,
-          limit: error.limit,
-          used: error.used,
-          resetAt: error.resetAt.toISOString(),
-        },
-        { status: 429 },
-      );
+      return usageLimitResponse(error);
     }
 
     throw error;
@@ -139,6 +157,8 @@ export async function POST(request: Request) {
     });
 
     const campaign = await prisma.$transaction(async (tx) => {
+      await assertCanGenerateCampaignInTransaction(userId, tx);
+
       const createdCampaign = await tx.campaign.create({
         data: {
           brandId: brand.id,
@@ -181,6 +201,10 @@ export async function POST(request: Request) {
       ...result,
     });
   } catch (error) {
+    if (error instanceof UsageLimitExceededError) {
+      return usageLimitResponse(error);
+    }
+
     logCampaignGenerationError(error);
 
     if (error instanceof CampaignGenerationError) {
