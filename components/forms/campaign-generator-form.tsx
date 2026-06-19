@@ -684,6 +684,16 @@ function getFriendlyErrorMessage(
       };
     }
 
+    if (status === 429) {
+      return {
+        title: "Please wait and try again",
+        message:
+          data.error ??
+          "Too many generation requests. Please wait a moment and try again.",
+        showUpgradeLink: false,
+      };
+    }
+
     return {
       title: "Campaign generation failed",
       message: data.error,

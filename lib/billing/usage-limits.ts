@@ -1,11 +1,14 @@
 import "server-only";
 
+import type { Prisma } from "@/lib/db/generated/prisma/client";
 import {
   AiUsageActionType,
   SubscriptionPlan,
   SubscriptionStatus,
 } from "@/lib/db/generated/prisma/client";
 import { prisma } from "@/lib/db/prisma";
+
+type UsageDbClient = Pick<typeof prisma, "aiUsage" | "subscription">;
 
 const PLAN_LIMITS: Record<SubscriptionPlan, number> = {
   [SubscriptionPlan.FREE]: 3,
@@ -54,8 +57,9 @@ export function getNextMonthResetDate(): Date {
 
 export async function getCurrentUserPlan(
   userId: string,
+  db: UsageDbClient = prisma,
 ): Promise<SubscriptionPlan> {
-  const subscription = await prisma.subscription.findUnique({
+  const subscription = await db.subscription.findUnique({
     where: { userId },
     select: { plan: true, status: true },
   });
@@ -71,10 +75,13 @@ export async function getCurrentUserPlan(
   return SubscriptionPlan.FREE;
 }
 
-export async function getMonthlyGenerationUsage(userId: string): Promise<number> {
+export async function getMonthlyGenerationUsage(
+  userId: string,
+  db: UsageDbClient = prisma,
+): Promise<number> {
   const { start, end } = getCurrentMonthWindow();
 
-  return prisma.aiUsage.count({
+  return db.aiUsage.count({
     where: {
       userId,
       actionType: AiUsageActionType.GENERATE_CAMPAIGN,
@@ -86,10 +93,13 @@ export async function getMonthlyGenerationUsage(userId: string): Promise<number>
   });
 }
 
-export async function assertCanGenerateCampaign(userId: string): Promise<void> {
+export async function assertCanGenerateCampaign(
+  userId: string,
+  db: UsageDbClient = prisma,
+): Promise<void> {
   const [plan, used] = await Promise.all([
-    getCurrentUserPlan(userId),
-    getMonthlyGenerationUsage(userId),
+    getCurrentUserPlan(userId, db),
+    getMonthlyGenerationUsage(userId, db),
   ]);
   const limit = getPlanLimit(plan);
   const resetAt = getNextMonthResetDate();
@@ -97,4 +107,11 @@ export async function assertCanGenerateCampaign(userId: string): Promise<void> {
   if (used >= limit) {
     throw new UsageLimitExceededError(plan, limit, used, resetAt);
   }
+}
+
+export async function assertCanGenerateCampaignInTransaction(
+  userId: string,
+  tx: Prisma.TransactionClient,
+): Promise<void> {
+  return assertCanGenerateCampaign(userId, tx);
 }
