@@ -2,33 +2,39 @@ import "server-only";
 
 import Stripe from "stripe";
 
+import {
+  getStripeServerEnv,
+  isStripeConfigured,
+} from "@/lib/env";
+
 let stripeClient: Stripe | null = null;
 
 export type CheckoutPlan = "PRO" | "AGENCY";
 
 export function getStripeConfig() {
-  const secretKey = process.env.STRIPE_SECRET_KEY;
-  const proPriceId = process.env.STRIPE_PRO_PRICE_ID;
-  const agencyPriceId = process.env.STRIPE_AGENCY_PRICE_ID;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (!isStripeConfigured()) {
+    return {
+      secretKey: undefined,
+      proPriceId: undefined,
+      agencyPriceId: undefined,
+      appUrl: undefined,
+      isConfigured: false,
+    };
+  }
+
+  const env = getStripeServerEnv();
 
   return {
-    secretKey,
-    proPriceId,
-    agencyPriceId,
-    appUrl,
-    isConfigured: Boolean(
-      secretKey && proPriceId && agencyPriceId && appUrl,
-    ),
+    secretKey: env.secretKey,
+    proPriceId: env.proPriceId,
+    agencyPriceId: env.agencyPriceId,
+    appUrl: env.appUrl,
+    isConfigured: true,
   };
 }
 
 export function getStripe(): Stripe {
-  const { secretKey } = getStripeConfig();
-
-  if (!secretKey) {
-    throw new Error("Stripe is not configured.");
-  }
+  const { secretKey } = getStripeServerEnv();
 
   if (!stripeClient) {
     stripeClient = new Stripe(secretKey);
@@ -38,11 +44,15 @@ export function getStripe(): Stripe {
 }
 
 export function getPriceIdForPlan(plan: CheckoutPlan): string | null {
-  const { proPriceId, agencyPriceId } = getStripeConfig();
-
-  if (plan === "PRO") {
-    return proPriceId ?? null;
+  if (!isStripeConfigured()) {
+    return null;
   }
 
-  return agencyPriceId ?? null;
+  const { proPriceId, agencyPriceId } = getStripeServerEnv();
+
+  if (plan === "PRO") {
+    return proPriceId;
+  }
+
+  return agencyPriceId;
 }

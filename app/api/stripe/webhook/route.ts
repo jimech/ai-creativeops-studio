@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 
+import { EnvValidationError, getStripeWebhookSecret } from "@/lib/env";
 import { getStripe } from "@/lib/stripe/server";
 import {
   markSubscriptionCanceled,
@@ -9,13 +10,19 @@ import {
 } from "@/lib/stripe/subscription-sync";
 
 export async function POST(request: Request) {
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  let webhookSecret: string;
 
-  if (!webhookSecret) {
-    return NextResponse.json(
-      { error: "Webhook not configured." },
-      { status: 503 },
-    );
+  try {
+    webhookSecret = getStripeWebhookSecret();
+  } catch (error) {
+    if (error instanceof EnvValidationError) {
+      return NextResponse.json(
+        { error: "Webhook not configured." },
+        { status: 503 },
+      );
+    }
+
+    throw error;
   }
 
   const signature = request.headers.get("stripe-signature");
