@@ -10,6 +10,62 @@ import { prisma } from "@/lib/db/prisma";
 
 import { getStripeConfig, getStripe } from "./server";
 
+type WebhookLogContext = {
+  stripeSubscriptionId?: string;
+  stripeSessionId?: string;
+  stripeCustomerId?: string;
+};
+
+export function parseMetadataUserId(
+  userId: string | null | undefined,
+): string | null {
+  const trimmed = userId?.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  return trimmed;
+}
+
+export function parseMetadataPlan(
+  plan: string | null | undefined,
+): SubscriptionPlan | null {
+  if (plan === "PRO") {
+    return SubscriptionPlan.PRO;
+  }
+
+  if (plan === "AGENCY") {
+    return SubscriptionPlan.AGENCY;
+  }
+
+  return null;
+}
+
+export function logWebhookSkip(
+  eventType: string,
+  reason: string,
+  context?: WebhookLogContext,
+): void {
+  console.warn("[stripe webhook] Skipped event", {
+    eventType,
+    reason,
+    ...context,
+  });
+}
+
+export function logWebhookProcessed(
+  eventType: string,
+  action: string,
+  context?: WebhookLogContext,
+): void {
+  console.info("[stripe webhook] Processed event", {
+    eventType,
+    action,
+    ...context,
+  });
+}
+
 export function planFromPriceId(
   priceId: string | null | undefined,
 ): SubscriptionPlan | null {
@@ -60,15 +116,7 @@ export function resolvePlanFromSubscription(
     return fromPrice;
   }
 
-  if (metadataPlan === "PRO") {
-    return SubscriptionPlan.PRO;
-  }
-
-  if (metadataPlan === "AGENCY") {
-    return SubscriptionPlan.AGENCY;
-  }
-
-  return null;
+  return parseMetadataPlan(metadataPlan);
 }
 
 function getStripeCustomerId(
@@ -89,11 +137,37 @@ function getStripeCustomerId(
   return customer.id;
 }
 
+async function findUserIdByStripeCustomerId(
+  customerId: string,
+): Promise<string | null> {
+  const user = await prisma.user.findFirst({
+    where: { stripeCustomerId: customerId },
+    select: { id: true },
+  });
+
+  return user?.id ?? null;
+}
+
 export async function resolveUserIdForSubscription(
   subscription: Stripe.Subscription,
+  eventType = "resolve_user",
 ): Promise<string | null> {
-  if (subscription.metadata?.userId) {
-    return subscription.metadata.userId;
+  const metadataUserId = parseMetadataUserId(subscription.metadata?.userId);
+
+  if (metadataUserId) {
+    const user = await prisma.user.findUnique({
+      where: { id: metadataUserId },
+      select: { id: true },
+    });
+
+    if (user) {
+      return user.id;
+    }
+
+    logWebhookSkip(eventType, "metadata_user_not_found", {
+      stripeSubscriptionId: subscription.id,
+      stripeCustomerId: getStripeCustomerId(subscription.customer) ?? undefined,
+    });
   }
 
   const existing = await prisma.subscription.findFirst({
@@ -108,13 +182,10 @@ export async function resolveUserIdForSubscription(
   const customerId = getStripeCustomerId(subscription.customer);
 
   if (customerId) {
-    const user = await prisma.user.findFirst({
-      where: { stripeCustomerId: customerId },
-      select: { id: true },
-    });
+    const userId = await findUserIdByStripeCustomerId(customerId);
 
-    if (user) {
-      return user.id;
+    if (userId) {
+      return userId;
     }
   }
 
@@ -139,17 +210,37 @@ export async function syncSubscriptionFromStripe(
   options?: {
     userId?: string | null;
     fallbackPlan?: SubscriptionPlan | null;
+    eventType?: string;
   },
 ): Promise<boolean> {
-  const userId =
-    options?.userId ??
-    subscription.metadata?.userId ??
-    (await resolveUserIdForSubscription(subscription));
+  const eventType = options?.eventType ?? "customer.subscription.updated";
+
+  const explicitUserId = parseMetadataUserId(options?.userId ?? null);
+  let userId: string | null = null;
+
+  if (explicitUserId) {
+    const user = await prisma.user.findUnique({
+      where: { id: explicitUserId },
+      select: { id: true },
+    });
+
+    if (user) {
+      userId = user.id;
+    } else {
+      logWebhookSkip(eventType, "explicit_user_not_found", {
+        stripeSubscriptionId: subscription.id,
+      });
+      return false;
+    }
+  } else {
+    userId = await resolveUserIdForSubscription(subscription, eventType);
+  }
 
   if (!userId) {
-    console.warn(
-      `[stripe webhook] Unable to resolve user for subscription ${subscription.id}.`,
-    );
+    logWebhookSkip(eventType, "unable_to_resolve_user", {
+      stripeSubscriptionId: subscription.id,
+      stripeCustomerId: getStripeCustomerId(subscription.customer) ?? undefined,
+    });
     return false;
   }
 
@@ -158,9 +249,9 @@ export async function syncSubscriptionFromStripe(
     resolvePlanFromSubscription(subscription, subscription.metadata?.plan);
 
   if (!plan) {
-    console.warn(
-      `[stripe webhook] Unable to resolve plan for subscription ${subscription.id}.`,
-    );
+    logWebhookSkip(eventType, "unable_to_resolve_plan", {
+      stripeSubscriptionId: subscription.id,
+    });
     return false;
   }
 
@@ -194,40 +285,79 @@ export async function syncSubscriptionFromStripe(
     });
   });
 
+  logWebhookProcessed(eventType, "subscription_synced", {
+    stripeSubscriptionId: subscription.id,
+    stripeCustomerId: customerId ?? undefined,
+  });
+
   return true;
 }
 
 export async function markSubscriptionCanceled(
   subscription: Stripe.Subscription,
+  eventType = "customer.subscription.deleted",
 ): Promise<boolean> {
-  const userId = await resolveUserIdForSubscription(subscription);
+  const stripeSubscriptionId = subscription.id;
+  const customerId = getStripeCustomerId(subscription.customer) ?? undefined;
+  const currentPeriodEnd = getSubscriptionPeriodEnd(subscription);
+
+  const existingByStripeId = await prisma.subscription.findFirst({
+    where: { stripeSubscriptionId },
+    select: { userId: true },
+  });
+
+  if (existingByStripeId) {
+    await prisma.subscription.update({
+      where: { userId: existingByStripeId.userId },
+      data: {
+        status: SubscriptionStatus.CANCELED,
+        currentPeriodEnd,
+      },
+    });
+
+    logWebhookProcessed(eventType, "subscription_canceled", {
+      stripeSubscriptionId,
+      stripeCustomerId: customerId,
+    });
+
+    return true;
+  }
+
+  const userId = await resolveUserIdForSubscription(subscription, eventType);
 
   if (!userId) {
-    console.warn(
-      `[stripe webhook] Unable to resolve user for deleted subscription ${subscription.id}.`,
-    );
+    logWebhookSkip(eventType, "no_matching_user_or_subscription", {
+      stripeSubscriptionId,
+      stripeCustomerId: customerId,
+    });
     return false;
   }
 
-  const plan =
-    resolvePlanFromSubscription(subscription, subscription.metadata?.plan) ??
-    SubscriptionPlan.FREE;
-  const currentPeriodEnd = getSubscriptionPeriodEnd(subscription);
-
-  await prisma.subscription.upsert({
+  const existingByUser = await prisma.subscription.findUnique({
     where: { userId },
-    create: {
-      userId,
-      stripeSubscriptionId: subscription.id,
-      plan,
+    select: { id: true },
+  });
+
+  if (!existingByUser) {
+    logWebhookSkip(eventType, "no_subscription_row_for_user", {
+      stripeSubscriptionId,
+      stripeCustomerId: customerId,
+    });
+    return false;
+  }
+
+  await prisma.subscription.update({
+    where: { userId },
+    data: {
+      stripeSubscriptionId,
       status: SubscriptionStatus.CANCELED,
       currentPeriodEnd,
     },
-    update: {
-      stripeSubscriptionId: subscription.id,
-      status: SubscriptionStatus.CANCELED,
-      currentPeriodEnd,
-    },
+  });
+
+  logWebhookProcessed(eventType, "subscription_canceled", {
+    stripeSubscriptionId,
+    stripeCustomerId: customerId,
   });
 
   return true;
@@ -235,13 +365,37 @@ export async function markSubscriptionCanceled(
 
 export async function syncSubscriptionFromCheckoutSession(
   session: Stripe.Checkout.Session,
+  eventType = "checkout.session.completed",
 ): Promise<boolean> {
-  const userId = session.metadata?.userId ?? session.client_reference_id ?? null;
+  const metadataUserId = parseMetadataUserId(session.metadata?.userId);
+  const referenceUserId = parseMetadataUserId(session.client_reference_id);
+  const userId = metadataUserId ?? referenceUserId;
 
   if (!userId) {
-    console.warn(
-      `[stripe webhook] checkout.session.completed missing user mapping for session ${session.id}.`,
-    );
+    logWebhookSkip(eventType, "missing_user_mapping", {
+      stripeSessionId: session.id,
+      stripeCustomerId: getStripeCustomerId(session.customer) ?? undefined,
+    });
+    return false;
+  }
+
+  if (metadataUserId && referenceUserId && metadataUserId !== referenceUserId) {
+    logWebhookSkip(eventType, "conflicting_user_mapping", {
+      stripeSessionId: session.id,
+    });
+    return false;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true },
+  });
+
+  if (!user) {
+    logWebhookSkip(eventType, "user_not_found", {
+      stripeSessionId: session.id,
+      stripeCustomerId: getStripeCustomerId(session.customer) ?? undefined,
+    });
     return false;
   }
 
@@ -251,9 +405,10 @@ export async function syncSubscriptionFromCheckoutSession(
       : session.subscription?.id;
 
   if (!subscriptionId) {
-    console.warn(
-      `[stripe webhook] checkout.session.completed missing subscription for session ${session.id}.`,
-    );
+    logWebhookSkip(eventType, "missing_subscription", {
+      stripeSessionId: session.id,
+      stripeCustomerId: getStripeCustomerId(session.customer) ?? undefined,
+    });
     return false;
   }
 
@@ -267,12 +422,11 @@ export async function syncSubscriptionFromCheckoutSession(
   }
 
   const subscription = await getStripe().subscriptions.retrieve(subscriptionId);
-  const fallbackPlan =
-    session.metadata?.plan === "PRO"
-      ? SubscriptionPlan.PRO
-      : session.metadata?.plan === "AGENCY"
-        ? SubscriptionPlan.AGENCY
-        : null;
+  const fallbackPlan = parseMetadataPlan(session.metadata?.plan);
 
-  return syncSubscriptionFromStripe(subscription, { userId, fallbackPlan });
+  return syncSubscriptionFromStripe(subscription, {
+    userId,
+    fallbackPlan,
+    eventType,
+  });
 }
