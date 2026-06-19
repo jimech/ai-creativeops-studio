@@ -8,6 +8,13 @@ import "server-only";
 import OpenAI, { APIError } from "openai";
 import { z } from "zod";
 
+import {
+  assertAiGenerationModeAllowed,
+  EnvValidationError,
+  getOpenAiApiKey,
+  isMockAiGenerationMode,
+} from "@/lib/env";
+
 export type BrandContext = {
   name: string;
   industry: string;
@@ -69,22 +76,6 @@ const campaignGenerationResultSchema = z.object({
 
 const DEFAULT_MODEL = "gpt-4o-mini";
 
-function isMockGenerationMode(): boolean {
-  return process.env.AI_GENERATION_MODE === "mock";
-}
-
-function assertMockModeNotInProduction(): void {
-  if (isMockGenerationMode() && process.env.NODE_ENV === "production") {
-    throw new CampaignGenerationError(
-      "AI_GENERATION_MODE is set to mock in production. Remove mock mode or configure real OpenAI generation.",
-    );
-  }
-}
-
-function canUseMockGenerationMode(): boolean {
-  return isMockGenerationMode() && process.env.NODE_ENV !== "production";
-}
-
 function generateMockCampaignIdeas(
   input: GenerateCampaignIdeasInput,
 ): CampaignGenerationResult {
@@ -135,15 +126,15 @@ function generateMockCampaignIdeas(
 }
 
 function getOpenAIClient(): OpenAI {
-  const apiKey = process.env.OPENAI_API_KEY;
+  try {
+    return new OpenAI({ apiKey: getOpenAiApiKey() });
+  } catch (error) {
+    if (error instanceof EnvValidationError) {
+      throw new CampaignGenerationError(error.message);
+    }
 
-  if (!apiKey?.trim()) {
-    throw new CampaignGenerationError(
-      "OpenAI is not configured. Set OPENAI_API_KEY before generating campaigns.",
-    );
+    throw error;
   }
-
-  return new OpenAI({ apiKey });
 }
 
 function formatBrandContext(brand: BrandContext): string {
@@ -323,9 +314,17 @@ function toCampaignGenerationError(error: unknown): CampaignGenerationError {
 export async function generateCampaignIdeas(
   input: GenerateCampaignIdeasInput,
 ): Promise<CampaignGenerationOutcome> {
-  assertMockModeNotInProduction();
+  try {
+    assertAiGenerationModeAllowed();
+  } catch (error) {
+    if (error instanceof EnvValidationError) {
+      throw new CampaignGenerationError(error.message);
+    }
 
-  if (canUseMockGenerationMode()) {
+    throw error;
+  }
+
+  if (isMockAiGenerationMode()) {
     console.info("[campaign-generation] Using explicit mock generation mode.");
     return {
       result: generateMockCampaignIdeas(input),
