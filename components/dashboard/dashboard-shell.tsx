@@ -2,21 +2,42 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { SignOutButton } from "@/components/auth/sign-out-button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import type { SubscriptionPlan } from "@/lib/db/generated/prisma/client";
 
 const navigation = [
   { label: "Overview", href: "/dashboard" },
   { label: "Brands", href: "/dashboard/brands" },
   { label: "Campaigns", href: "/dashboard/campaigns" },
-  { label: "Assets", href: "/dashboard/assets" },
-  { label: "Settings", href: "/dashboard/settings" },
+  { label: "Billing", href: "/dashboard/billing" },
 ];
 
-export function DashboardShell({ children }: { children: ReactNode }) {
+export type DashboardShellUser = {
+  displayName: string;
+  email: string | null;
+  image: string | null;
+  initials: string;
+};
+
+export type DashboardShellPlan = {
+  plan: SubscriptionPlan;
+  planLabel: string;
+  statusLabel: string;
+};
+
+export function DashboardShell({
+  children,
+  user,
+  plan,
+}: {
+  children: ReactNode;
+  user: DashboardShellUser;
+  plan: DashboardShellPlan;
+}) {
   return (
     <div className="min-h-screen bg-background text-foreground lg:grid lg:grid-cols-[18rem_minmax(0,1fr)]">
       <aside className="hidden border-r border-border/80 bg-card/65 lg:flex lg:min-h-screen lg:flex-col">
@@ -51,9 +72,9 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             </p>
             <div className="mt-3 flex items-center justify-between gap-3">
               <span className="font-heading text-lg font-semibold">
-                Pro Studio
+                {plan.planLabel}
               </span>
-              <Badge variant="secondary">Active</Badge>
+              <Badge variant="secondary">{plan.statusLabel}</Badge>
             </div>
           </div>
         </div>
@@ -69,7 +90,7 @@ export function DashboardShell({ children }: { children: ReactNode }) {
               >
                 ai-creativeops-studio
               </Link>
-              <Badge variant="secondary">Pro Studio</Badge>
+              <Badge variant="secondary">{plan.planLabel}</Badge>
             </div>
 
             <nav className="flex gap-2 overflow-x-auto pb-1 lg:hidden">
@@ -108,13 +129,18 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 />
                 <div className="flex items-center justify-between gap-3 rounded-full border border-border/80 bg-card/70 px-3 py-2">
                   <Avatar size="sm">
-                    <AvatarFallback>CL</AvatarFallback>
+                    {user.image ? (
+                      <AvatarImage src={user.image} alt={user.displayName} />
+                    ) : null}
+                    <AvatarFallback>{user.initials}</AvatarFallback>
                   </Avatar>
                   <div className="min-w-0 pr-2 text-sm">
-                    <p className="font-medium leading-none">Claire</p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Founder
-                    </p>
+                    <p className="font-medium leading-none">{user.displayName}</p>
+                    {user.email ? (
+                      <p className="mt-1 truncate text-xs text-muted-foreground">
+                        {user.email}
+                      </p>
+                    ) : null}
                   </div>
                 </div>
                 <SignOutButton />
