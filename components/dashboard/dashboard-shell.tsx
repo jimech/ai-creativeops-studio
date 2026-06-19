@@ -13,7 +13,9 @@ const navigation = [
   { label: "Overview", href: "/dashboard" },
   { label: "Brands", href: "/dashboard/brands" },
   { label: "Campaigns", href: "/dashboard/campaigns" },
+  { label: "Assets", href: "/dashboard/assets" },
   { label: "Billing", href: "/dashboard/billing" },
+  { label: "Settings", href: "/dashboard/settings" },
 ];
 
 export type DashboardShellUser = {
