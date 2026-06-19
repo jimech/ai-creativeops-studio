@@ -52,17 +52,20 @@ export async function POST(request: Request) {
       case "checkout.session.completed":
         await syncSubscriptionFromCheckoutSession(
           event.data.object as Stripe.Checkout.Session,
+          event.type,
         );
         break;
       case "customer.subscription.created":
       case "customer.subscription.updated":
         await syncSubscriptionFromStripe(
           event.data.object as Stripe.Subscription,
+          { eventType: event.type },
         );
         break;
       case "customer.subscription.deleted":
         await markSubscriptionCanceled(
           event.data.object as Stripe.Subscription,
+          event.type,
         );
         break;
       default:
