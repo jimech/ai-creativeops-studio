@@ -1,3 +1,6 @@
+import Link from "next/link";
+
+import { auth } from "@/auth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -84,7 +87,10 @@ const plans = [
   },
 ];
 
-export default function Home() {
+export default async function Home() {
+  const session = await auth();
+  const billingHref = session ? "/dashboard/billing" : "/sign-in";
+
   return (
     <main className="min-h-screen overflow-hidden bg-background text-foreground">
       <div className="mx-auto flex w-full max-w-7xl flex-col px-5 py-5 sm:px-8 lg:px-10">
@@ -112,7 +118,7 @@ export default function Home() {
             </a>
           </div>
           <Button asChild className="rounded-full px-5">
-            <a href="#start">Start creating</a>
+            <Link href="/sign-in">Sign in to start</Link>
           </Button>
         </nav>
 
@@ -137,7 +143,7 @@ export default function Home() {
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
               <Button asChild size="lg" className="rounded-full px-7">
-                <a href="#start">Start creating</a>
+                <Link href="/sign-in">Sign in to start</Link>
               </Button>
               <Button
                 asChild
@@ -377,8 +383,14 @@ export default function Home() {
                     /mo
                   </span>
                 </p>
-                <Button variant="outline" className="w-full rounded-full bg-background/60">
-                  Preview plan
+                <Button
+                  asChild
+                  variant="outline"
+                  className="w-full rounded-full bg-background/60"
+                >
+                  <Link href={billingHref}>
+                    {session ? "View plans & billing" : "Sign in to view plans"}
+                  </Link>
                 </Button>
               </CardContent>
             </Card>
@@ -386,24 +398,25 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="start" className="mx-auto w-full max-w-7xl px-5 pb-10 sm:px-8 lg:px-10">
+      <section className="mx-auto w-full max-w-7xl px-5 pb-10 sm:px-8 lg:px-10">
         <div className="rounded-[2.25rem] border border-border/80 bg-primary px-6 py-14 text-center text-primary-foreground shadow-2xl shadow-primary/15 sm:px-10">
           <p className="text-xs font-semibold uppercase tracking-[0.35em] opacity-75">
             Ready for your next campaign
           </p>
           <h2 className="mx-auto mt-4 max-w-3xl font-heading text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">
-            Start building campaign ideas with a calmer creative workflow.
+            Sign in and start building campaign ideas in the studio.
           </h2>
           <p className="mx-auto mt-5 max-w-2xl leading-8 opacity-80">
-            Bring your brand context, campaign goals, and product details into a
-            focused workspace for faster creative direction.
+            Create a free account with Google, add your brand context, and
+            generate your first saved campaign from the dashboard.
           </p>
           <Button
+            asChild
             size="lg"
             variant="secondary"
             className="mt-8 rounded-full bg-primary-foreground px-7 text-primary hover:bg-primary-foreground/90"
           >
-            Start creating
+            <Link href="/sign-in">Sign in to start creating</Link>
           </Button>
         </div>
       </section>
