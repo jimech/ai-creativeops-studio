@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { CheckoutButton } from "@/components/billing/checkout-button";
+import { ManageBillingButton } from "@/components/billing/manage-billing-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -96,7 +97,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
   const userId = await requireCurrentUserId();
   const { checkout } = await searchParams;
 
-  const [plan, used, subscription] = await Promise.all([
+  const [plan, used, subscription, user] = await Promise.all([
     getCurrentUserPlan(userId),
     getMonthlyGenerationUsage(userId),
     prisma.subscription.findUnique({
@@ -108,6 +109,10 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
         stripeSubscriptionId: true,
       },
     }),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { stripeCustomerId: true },
+    }),
   ]);
 
   const limit = getPlanLimit(plan);
@@ -117,6 +122,10 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
   const nearLimit = !atOrOverLimit && used >= Math.ceil(limit * 0.8);
   const showUpgradeCta = plan === "FREE" || atOrOverLimit || nearLimit;
   const subscriptionStatus = subscription?.status ?? null;
+  const hasActiveSubscription =
+    subscriptionStatus === "ACTIVE" || subscriptionStatus === "TRIALING";
+  const showManageBilling =
+    Boolean(user?.stripeCustomerId) || hasActiveSubscription;
 
   return (
     <div className="flex flex-col gap-6">
@@ -214,6 +223,16 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
               </p>
             ) : null}
 
+            {showManageBilling ? (
+              <div className="flex flex-col gap-3 rounded-2xl border border-border/80 bg-background/65 px-4 py-4">
+                <p className="text-sm leading-6 text-muted-foreground">
+                  Manage payment method, invoices, cancellation, and
+                  subscription in Stripe.
+                </p>
+                <ManageBillingButton />
+              </div>
+            ) : null}
+
             {showUpgradeCta ? (
               <Button asChild className="w-fit rounded-full">
                 <Link href="#upgrade-plans">View upgrade options</Link>
@@ -287,11 +306,13 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
                     <li key={feature}>• {feature}</li>
                   ))}
                 </ul>
-                <CheckoutButton
-                  plan={item.plan}
-                  label={`Subscribe to ${item.name}`}
-                  variant={item.plan === "PRO" ? "default" : "outline"}
-                />
+                {!hasActiveSubscription ? (
+                  <CheckoutButton
+                    plan={item.plan}
+                    label={`Subscribe to ${item.name}`}
+                    variant={item.plan === "PRO" ? "default" : "outline"}
+                  />
+                ) : null}
               </CardContent>
             </Card>
           ))}
