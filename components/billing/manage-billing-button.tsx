@@ -50,7 +50,7 @@ export function ManageBillingButton({
       <Button
         type="button"
         variant={variant}
-        className="rounded-full"
+        
         disabled={isLoading}
         onClick={handleManageBilling}
       >

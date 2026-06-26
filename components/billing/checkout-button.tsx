@@ -56,7 +56,7 @@ export function CheckoutButton({
       <Button
         type="button"
         variant={variant}
-        className="rounded-full"
+        
         disabled={isLoading}
         onClick={handleCheckout}
       >

@@ -150,7 +150,7 @@ export function CampaignGeneratorForm({
           <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
             {error ? (
               <div
-                className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm leading-6 text-destructive"
+                className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm leading-6 text-destructive"
                 role="alert"
               >
                 <p className="font-medium">{errorTitle ?? "Campaign generation failed"}</p>
@@ -159,7 +159,7 @@ export function CampaignGeneratorForm({
                   <Button
                     asChild
                     variant="outline"
-                    className="mt-3 rounded-full border-destructive/30 bg-background/60 text-destructive hover:bg-destructive/10"
+                    className="mt-3 rounded-xl border-destructive/30 bg-background text-destructive hover:bg-destructive/10"
                   >
                     <Link href="/dashboard/billing">Upgrade plan</Link>
                   </Button>
@@ -169,7 +169,7 @@ export function CampaignGeneratorForm({
 
             {isGenerating ? (
               <div
-                className="rounded-2xl border border-border/80 bg-muted/40 px-4 py-3 text-sm leading-6 text-muted-foreground"
+                className="rounded-xl border border-border bg-muted/40 px-4 py-3 text-sm leading-6 text-muted-foreground"
                 role="status"
                 aria-live="polite"
               >
@@ -185,12 +185,12 @@ export function CampaignGeneratorForm({
             ) : null}
 
             <fieldset disabled={isGenerating} className="flex flex-col gap-6">
-              <Card className="border-border/80 bg-card/75 shadow-sm [--card-spacing:--spacing(6)]">
+              <Card className="[--card-spacing:--spacing(6)]">
                 <CardHeader>
-                  <Badge variant="outline" className="w-fit bg-background/60">
+                  <Badge variant="outline" className="w-fit bg-background">
                     Step 1 · Required details
                   </Badge>
-                  <CardTitle className="font-heading text-3xl tracking-[-0.03em]">
+                  <CardTitle className="font-heading text-2xl tracking-[-0.01em]">
                     Start with the essentials
                   </CardTitle>
                   <CardDescription className="max-w-2xl text-base leading-7">
@@ -261,12 +261,12 @@ export function CampaignGeneratorForm({
                 </CardContent>
               </Card>
 
-              <Card className="border-border/80 bg-card/75 shadow-sm [--card-spacing:--spacing(6)]">
+              <Card className="[--card-spacing:--spacing(6)]">
                 <CardHeader>
                   <Badge variant="secondary" className="w-fit">
                     Step 2 · Campaign context
                   </Badge>
-                  <CardTitle className="font-heading text-3xl tracking-[-0.03em]">
+                  <CardTitle className="font-heading text-2xl tracking-[-0.01em]">
                     Add optional brief details
                   </CardTitle>
                   <CardDescription className="max-w-2xl text-base leading-7">
@@ -349,7 +349,7 @@ export function CampaignGeneratorForm({
                       name="keyMessage"
                       rows={4}
                       placeholder="Explain the main idea the campaign should communicate."
-                      className="w-full resize-none rounded-2xl border border-input bg-background/70 px-3 py-3 text-sm leading-6 text-foreground outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                      className="w-full resize-none rounded-xl border border-input bg-card px-3 py-3 text-sm leading-6 text-foreground outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/20"
                     />
                   </Field>
 
@@ -375,18 +375,18 @@ export function CampaignGeneratorForm({
                       name="additionalNotes"
                       rows={4}
                       placeholder="Add must-use phrases, creative references, exclusions, or internal context."
-                      className="w-full resize-none rounded-2xl border border-input bg-background/70 px-3 py-3 text-sm leading-6 text-foreground outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                      className="w-full resize-none rounded-xl border border-input bg-card px-3 py-3 text-sm leading-6 text-foreground outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/20"
                     />
                   </Field>
                 </CardContent>
               </Card>
 
-              <Card className="border-border/80 bg-card/75 shadow-sm [--card-spacing:--spacing(6)]">
+              <Card className="[--card-spacing:--spacing(6)]">
                 <CardHeader>
-                  <Badge variant="outline" className="w-fit bg-background/60">
+                  <Badge variant="outline" className="w-fit bg-background">
                     What you&apos;ll receive
                   </Badge>
-                  <CardTitle className="font-heading text-3xl tracking-[-0.03em]">
+                  <CardTitle className="font-heading text-2xl tracking-[-0.01em]">
                     Full campaign output set
                   </CardTitle>
                   <CardDescription className="max-w-2xl text-base leading-7">
@@ -398,7 +398,7 @@ export function CampaignGeneratorForm({
                   {outputSections.map((section) => (
                     <div
                       key={section.title}
-                      className="rounded-3xl border border-border/75 bg-background/65 p-4"
+                      className="rounded-2xl border border-border bg-background p-4"
                     >
                       <p className="font-heading text-lg font-semibold">
                         {section.title}
@@ -412,17 +412,17 @@ export function CampaignGeneratorForm({
               </Card>
             </fieldset>
 
-            <div className="flex flex-col-reverse gap-3 rounded-3xl border border-border/80 bg-card/70 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="glass-card flex flex-col-reverse gap-3 rounded-2xl p-4 sm:flex-row sm:items-center sm:justify-between">
               <Button
                 asChild
                 variant="outline"
-                className="rounded-full bg-background/60"
+                 
               >
                 <Link href="/dashboard/campaigns">View campaign library</Link>
               </Button>
               <Button
                 type="submit"
-                className="rounded-full"
+                
                 disabled={isGenerating}
               >
                 {isGenerating
@@ -432,12 +432,12 @@ export function CampaignGeneratorForm({
             </div>
           </form>
         ) : (
-          <Card className="border-border/80 bg-card/75 shadow-sm [--card-spacing:--spacing(6)]">
+          <Card className="[--card-spacing:--spacing(6)]">
             <CardHeader>
-              <Badge variant="outline" className="w-fit bg-background/60">
+              <Badge variant="outline" className="w-fit bg-background">
                 Brand required
               </Badge>
-              <CardTitle className="font-heading text-3xl tracking-[-0.03em]">
+              <CardTitle className="font-heading text-2xl tracking-[-0.01em]">
                 Add a brand profile before generating
               </CardTitle>
               <CardDescription className="max-w-2xl text-base leading-7">
@@ -446,13 +446,13 @@ export function CampaignGeneratorForm({
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-3 sm:flex-row">
-              <Button asChild className="rounded-full">
+              <Button asChild >
                 <Link href="/dashboard/brands/new">Create brand profile</Link>
               </Button>
               <Button
                 asChild
                 variant="outline"
-                className="rounded-full bg-background/60"
+                 
               >
                 <Link href="/dashboard/brands">View saved brands</Link>
               </Button>
@@ -461,12 +461,12 @@ export function CampaignGeneratorForm({
         )}
 
         {isGenerating ? (
-          <Card className="border-border/80 bg-card/75 shadow-sm [--card-spacing:--spacing(6)]">
+          <Card className="[--card-spacing:--spacing(6)]">
             <CardHeader>
               <Badge variant="secondary" className="w-fit">
                 Generating
               </Badge>
-              <CardTitle className="font-heading text-3xl tracking-[-0.03em]">
+              <CardTitle className="font-heading text-2xl tracking-[-0.01em]">
                 Building your campaign output
               </CardTitle>
               <CardDescription>
@@ -478,12 +478,12 @@ export function CampaignGeneratorForm({
         ) : result ? (
           <GeneratedOutputPreview result={result} />
         ) : (
-          <Card className="border-border/80 bg-card/75 shadow-sm [--card-spacing:--spacing(6)]">
+          <Card className="[--card-spacing:--spacing(6)]">
             <CardHeader>
-              <Badge variant="outline" className="w-fit bg-background/60">
+              <Badge variant="outline" className="w-fit bg-background">
                 Campaign preview
               </Badge>
-              <CardTitle className="font-heading text-3xl tracking-[-0.03em]">
+              <CardTitle className="font-heading text-2xl tracking-[-0.01em]">
                 Generated output will appear here
               </CardTitle>
               <CardDescription>
@@ -497,9 +497,9 @@ export function CampaignGeneratorForm({
       </div>
 
       <aside className="flex flex-col gap-4 xl:sticky xl:top-6">
-        <Card className="border-border/80 bg-card/75 shadow-sm [--card-spacing:--spacing(5)]">
+        <Card className="[--card-spacing:--spacing(5)]">
           <CardHeader>
-            <Badge variant="outline" className="w-fit bg-background/60">
+            <Badge variant="outline" className="w-fit bg-background">
               Selected brand
             </Badge>
             <CardTitle className="font-heading text-2xl">
@@ -524,7 +524,7 @@ export function CampaignGeneratorForm({
           ) : null}
         </Card>
 
-        <Card className="border-border/80 bg-primary text-primary-foreground shadow-sm [--card-spacing:--spacing(5)]">
+        <Card className="border-border bg-primary text-primary-foreground [--card-spacing:--spacing(5)]">
           <CardHeader>
             <CardTitle className="font-heading text-2xl">
               Generation usage
@@ -542,7 +542,7 @@ export function CampaignGeneratorForm({
           </CardContent>
         </Card>
 
-        <Card className="border-border/80 bg-card/75 shadow-sm [--card-spacing:--spacing(5)]">
+        <Card className="[--card-spacing:--spacing(5)]">
           <CardHeader>
             <CardTitle className="font-heading text-2xl">
               Tips for stronger briefs
@@ -553,7 +553,7 @@ export function CampaignGeneratorForm({
               {tips.map((tip) => (
                 <li
                   key={tip}
-                  className="rounded-2xl border border-border/70 bg-background/65 p-3 text-sm leading-6 text-muted-foreground"
+                  className="rounded-xl border border-border bg-background p-3 text-sm leading-6 text-muted-foreground"
                 >
                   {tip}
                 </li>
@@ -562,7 +562,7 @@ export function CampaignGeneratorForm({
           </CardContent>
         </Card>
 
-        <Card className="border-border/80 bg-card/75 shadow-sm [--card-spacing:--spacing(5)]">
+        <Card className="[--card-spacing:--spacing(5)]">
           <CardHeader>
             <CardTitle className="font-heading text-2xl">
               Saved campaigns
@@ -573,7 +573,7 @@ export function CampaignGeneratorForm({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild variant="outline" className="w-full rounded-full bg-background/60">
+            <Button asChild variant="outline" className="w-full rounded-xl bg-background">
               <Link href="/dashboard/campaigns">Open campaign library</Link>
             </Button>
           </CardContent>
@@ -604,14 +604,14 @@ function GeneratedOutputPreview({
   ];
 
   return (
-    <Card className="border-border/80 bg-card/75 shadow-sm [--card-spacing:--spacing(6)]">
+    <Card className="[--card-spacing:--spacing(6)]">
       <CardHeader>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <Badge variant="secondary" className="w-fit">
               Saved successfully
             </Badge>
-            <CardTitle className="mt-3 font-heading text-3xl tracking-[-0.03em]">
+            <CardTitle className="mt-3 font-heading text-2xl tracking-[-0.01em]">
               {previewTitle}
             </CardTitle>
             <CardDescription className="mt-2 max-w-2xl text-base leading-7">
@@ -619,7 +619,7 @@ function GeneratedOutputPreview({
               output below or open the full saved campaign page.
             </CardDescription>
           </div>
-          <Button asChild className="shrink-0 rounded-full">
+          <Button asChild className="shrink-0">
             <Link href={`/dashboard/campaigns/${result.campaignId}`}>
               View saved campaign
             </Link>
@@ -641,8 +641,8 @@ function GeneratedOutputPreview({
 
 function OutputGroup({ title, items }: { title: string; items: string[] }) {
   return (
-    <div className="rounded-3xl border border-border/70 bg-background/65 p-5">
-      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+    <div className="rounded-2xl border border-border bg-background p-5">
+      <p className="label-eyebrow text-muted-foreground">
         {title}
       </p>
       {items.length === 0 ? (
@@ -774,10 +774,10 @@ function Field({
 }) {
   return (
     <label className="flex flex-col gap-2" htmlFor={htmlFor}>
-      <span className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+      <span className="label-eyebrow text-muted-foreground">
         {label}
         {required ? (
-          <span className="ml-1 text-primary" aria-hidden="true">
+          <span className="ml-1 text-accent" aria-hidden="true">
             *
           </span>
         ) : null}
@@ -797,7 +797,7 @@ function Select({
 }: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
-      className="h-10 w-full rounded-xl border border-input bg-background/70 px-3 text-sm text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60"
+      className="h-10 w-full rounded-xl border border-input bg-card px-3 text-sm text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-60"
       {...props}
     >
       {children}

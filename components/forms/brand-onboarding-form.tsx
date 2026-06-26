@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Check } from "lucide-react";
 import { useActionState } from "react";
 
 import { createBrand } from "@/app/dashboard/brands/new/actions";
@@ -34,11 +35,11 @@ const tones = [
 ];
 
 const progressItems = [
-  "Brand basics",
-  "Voice and audience",
-  "Visual identity",
-  "Product context",
-  "Brand assets",
+  { title: "Brand basics", status: "current" as const },
+  { title: "Voice and audience", status: "pending" as const },
+  { title: "Visual identity", status: "pending" as const },
+  { title: "Product context", status: "pending" as const },
+  { title: "Brand assets", status: "pending" as const },
 ];
 
 const tips = [
@@ -63,20 +64,22 @@ export function BrandOnboardingForm() {
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem] xl:items-start">
       <form action={formAction} className="flex min-w-0 flex-col gap-6">
         {state.message ? (
-          <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
             {state.message}
           </div>
         ) : null}
 
         <OnboardingSection
+          step={1}
           eyebrow="Brand basics"
-          title="Start with the essentials."
+          title="Start with the essentials"
           description="These details frame the brand before campaign ideas are generated."
         >
           <div className="grid gap-4 md:grid-cols-2">
             <Field
               label="Brand name"
               htmlFor="name"
+              required
               error={state.errors?.name?.[0]}
             >
               <Input
@@ -90,13 +93,14 @@ export function BrandOnboardingForm() {
             <Field
               label="Industry"
               htmlFor="industry"
+              required
               error={state.errors?.industry?.[0]}
             >
               <select
                 id="industry"
                 name="industry"
                 defaultValue=""
-                className="h-10 w-full rounded-xl border border-input bg-background/70 px-3 text-sm text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive"
+                className="h-10 w-full rounded-xl border border-input bg-card px-3 text-sm text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/20 aria-invalid:border-destructive"
                 required
                 aria-invalid={!!state.errors?.industry}
               >
@@ -124,8 +128,9 @@ export function BrandOnboardingForm() {
         </OnboardingSection>
 
         <OnboardingSection
+          step={2}
           eyebrow="Brand voice"
-          title="Define how the brand should sound."
+          title="Define how the brand should sound"
           description="Voice context helps the studio keep captions, hooks, and creative direction aligned."
         >
           <div className="grid gap-4 md:grid-cols-2">
@@ -134,7 +139,7 @@ export function BrandOnboardingForm() {
                 id="toneOfVoice"
                 name="toneOfVoice"
                 defaultValue=""
-                className="h-10 w-full rounded-xl border border-input bg-background/70 px-3 text-sm text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                className="h-10 w-full rounded-xl border border-input bg-card px-3 text-sm text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/20"
               >
                 <option value="">Choose a tone</option>
                 {tones.map((tone) => (
@@ -161,14 +166,15 @@ export function BrandOnboardingForm() {
               id="brand-description"
               rows={5}
               placeholder="Describe the brand's world, point of view, customer, and creative standards."
-              className="w-full resize-none rounded-2xl border border-input bg-background/70 px-3 py-3 text-sm leading-6 text-foreground outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              className="w-full resize-none rounded-xl border border-input bg-card px-3 py-3 text-sm leading-6 text-foreground outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/20"
             />
           </Field>
         </OnboardingSection>
 
         <OnboardingSection
+          step={3}
           eyebrow="Visual identity"
-          title="Capture the look and feeling."
+          title="Capture the look and feeling"
           description="Use simple lists for now. The MVP can turn these notes into visual prompts later."
         >
           <div className="grid gap-4 md:grid-cols-3">
@@ -180,7 +186,7 @@ export function BrandOnboardingForm() {
               <Input
                 id="colors"
                 name="colors"
-                placeholder="Ivory, cocoa, muted rose"
+                placeholder="Ivory, charcoal, muted clay"
               />
             </Field>
             <Field label="Fonts" htmlFor="fonts" hint="Comma-separated values.">
@@ -197,15 +203,16 @@ export function BrandOnboardingForm() {
             >
               <Input
                 id="style-keywords"
-                placeholder="Quiet luxury, tactile, minimal"
+                placeholder="Structured, editorial, premium"
               />
             </Field>
           </div>
         </OnboardingSection>
 
         <OnboardingSection
+          step={4}
           eyebrow="Product context"
-          title="Add the product details campaigns need."
+          title="Add the product details campaigns need"
           description="This section is UI-only for now. Product fields are not saved to the database yet."
         >
           <div className="grid gap-4 md:grid-cols-2">
@@ -221,14 +228,15 @@ export function BrandOnboardingForm() {
               id="product-description"
               rows={4}
               placeholder="Summarize materials, benefits, use cases, customer motivations, and what makes the product distinct."
-              className="w-full resize-none rounded-2xl border border-input bg-background/70 px-3 py-3 text-sm leading-6 text-foreground outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              className="w-full resize-none rounded-xl border border-input bg-card px-3 py-3 text-sm leading-6 text-foreground outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/20"
             />
           </Field>
         </OnboardingSection>
 
         <OnboardingSection
+          step={5}
           eyebrow="Brand assets"
-          title="Prepare the creative references."
+          title="Prepare the creative references"
           description="These upload areas are visual placeholders only. File upload logic will be added later."
         >
           <div className="grid gap-4 md:grid-cols-3">
@@ -247,15 +255,15 @@ export function BrandOnboardingForm() {
           </div>
         </OnboardingSection>
 
-        <div className="flex flex-col-reverse gap-3 rounded-3xl border border-border/80 bg-card/70 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <Button asChild variant="outline" className="rounded-full bg-background/60">
+        <div className="glass-card flex flex-col-reverse gap-3 rounded-2xl p-4 sm:flex-row sm:items-center sm:justify-between">
+          <Button asChild variant="outline">
             <Link href="/dashboard">Cancel</Link>
           </Button>
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button type="button" variant="outline" className="rounded-full">
+            <Button type="button" variant="outline">
               Save as draft
             </Button>
-            <Button type="submit" className="rounded-full" disabled={isPending}>
+            <Button type="submit" disabled={isPending}>
               {isPending ? "Saving brand profile..." : "Save brand profile"}
             </Button>
           </div>
@@ -263,12 +271,12 @@ export function BrandOnboardingForm() {
       </form>
 
       <aside className="flex flex-col gap-4 xl:sticky xl:top-6">
-        <Card className="border-border/80 bg-card/75 shadow-sm [--card-spacing:--spacing(5)]">
+        <Card className="[--card-spacing:--spacing(5)]">
           <CardHeader>
             <Badge variant="secondary" className="w-fit">
               Onboarding progress
             </Badge>
-            <CardTitle className="font-heading text-2xl">
+            <CardTitle className="font-heading text-xl">
               Brand profile draft
             </CardTitle>
             <CardDescription>
@@ -276,21 +284,50 @@ export function BrandOnboardingForm() {
               context.
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            {progressItems.map((item, index) => (
-              <div key={item} className="flex items-center gap-3">
-                <span className="flex size-7 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-secondary-foreground">
-                  {index + 1}
-                </span>
-                <span className="text-sm text-muted-foreground">{item}</span>
-              </div>
-            ))}
+          <CardContent>
+            <ol className="flex flex-col">
+              {progressItems.map((item, index) => {
+                const isLast = index === progressItems.length - 1;
+                const isCurrent = item.status === "current";
+
+                return (
+                  <li key={item.title} className="relative flex gap-3 pb-6 last:pb-0">
+                    {!isLast ? (
+                      <span
+                        aria-hidden="true"
+                        className="absolute top-6 left-[0.6875rem] h-full w-px bg-border"
+                      />
+                    ) : null}
+                    <span
+                      className={
+                        "relative z-10 flex size-[1.375rem] shrink-0 items-center justify-center rounded-full border text-[0.7rem] font-semibold " +
+                        (isCurrent
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "glass-inset text-muted-foreground")
+                      }
+                    >
+                      {isCurrent ? <Check className="size-3" /> : index + 1}
+                    </span>
+                    <span
+                      className={
+                        "pt-0.5 text-sm " +
+                        (isCurrent
+                          ? "font-medium text-foreground"
+                          : "text-muted-foreground")
+                      }
+                    >
+                      {item.title}
+                    </span>
+                  </li>
+                );
+              })}
+            </ol>
           </CardContent>
         </Card>
 
-        <Card className="border-border/80 bg-card/75 shadow-sm [--card-spacing:--spacing(5)]">
+        <Card className="[--card-spacing:--spacing(5)]">
           <CardHeader>
-            <CardTitle className="font-heading text-2xl">
+            <CardTitle className="font-heading text-xl">
               Tips for better AI output
             </CardTitle>
           </CardHeader>
@@ -299,7 +336,7 @@ export function BrandOnboardingForm() {
               {tips.map((tip) => (
                 <li
                   key={tip}
-                  className="rounded-2xl border border-border/70 bg-background/65 p-3 text-sm leading-6 text-muted-foreground"
+                  className="glass-inset rounded-2xl p-3 text-sm leading-6 text-muted-foreground"
                 >
                   {tip}
                 </li>
@@ -308,12 +345,12 @@ export function BrandOnboardingForm() {
           </CardContent>
         </Card>
 
-        <Card className="border-border/80 bg-primary text-primary-foreground shadow-sm [--card-spacing:--spacing(5)]">
+        <Card className="border-border bg-primary text-primary-foreground [--card-spacing:--spacing(5)]">
           <CardHeader>
-            <CardTitle className="font-heading text-2xl">
+            <CardTitle className="font-heading text-xl">
               What happens next
             </CardTitle>
-            <CardDescription className="text-primary-foreground/75">
+            <CardDescription className="text-primary-foreground/70">
               Saved brand profiles will appear in your dashboard workflow.
             </CardDescription>
           </CardHeader>
@@ -331,30 +368,35 @@ export function BrandOnboardingForm() {
 }
 
 function OnboardingSection({
+  step,
   eyebrow,
   title,
   description,
   children,
 }: {
+  step: number;
   eyebrow: string;
   title: string;
   description: string;
   children: React.ReactNode;
 }) {
   return (
-    <Card className="border-border/80 bg-card/75 shadow-sm [--card-spacing:--spacing(6)]">
-      <CardHeader>
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
-          {eyebrow}
-        </p>
-        <CardTitle className="font-heading text-3xl tracking-[-0.03em]">
+    <Card className="[--card-spacing:--spacing(6)]">
+      <CardHeader className="border-b border-border">
+        <div className="flex items-center gap-2">
+          <span className="flex size-5 items-center justify-center rounded-full bg-secondary text-[0.65rem] font-semibold text-secondary-foreground">
+            {step}
+          </span>
+          <p className="label-eyebrow text-accent">{eyebrow}</p>
+        </div>
+        <CardTitle className="mt-1 font-heading text-2xl tracking-[-0.01em]">
           {title}
         </CardTitle>
-        <CardDescription className="max-w-2xl text-base leading-7">
+        <CardDescription className="max-w-2xl text-sm leading-6">
           {description}
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-col gap-5">{children}</CardContent>
+      <CardContent className="flex flex-col gap-5 pt-5">{children}</CardContent>
     </Card>
   );
 }
@@ -364,18 +406,25 @@ function Field({
   htmlFor,
   hint,
   error,
+  required,
   children,
 }: {
   label: string;
   htmlFor: string;
   hint?: string;
   error?: string;
+  required?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <label className="flex flex-col gap-2" htmlFor={htmlFor}>
-      <span className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+      <span className="label-eyebrow text-muted-foreground">
         {label}
+        {required ? (
+          <span className="ml-1 text-accent" aria-hidden="true">
+            *
+          </span>
+        ) : null}
       </span>
       {children}
       {hint ? (
@@ -396,11 +445,9 @@ function AssetPlaceholder({
   description: string;
 }) {
   return (
-    <div className="flex min-h-40 flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-background/65 p-5 text-center">
-      <span className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">
-        UI only
-      </span>
-      <h3 className="mt-3 font-heading text-xl font-semibold">{title}</h3>
+    <div className="flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-background p-5 text-center">
+      <span className="label-eyebrow text-accent">UI only</span>
+      <h3 className="mt-3 font-heading text-lg font-semibold">{title}</h3>
       <p className="mt-2 text-sm leading-6 text-muted-foreground">
         {description}
       </p>

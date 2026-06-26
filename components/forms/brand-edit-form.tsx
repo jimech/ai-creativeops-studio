@@ -52,12 +52,12 @@ export function BrandEditForm({ brand }: { brand: BrandEditValues }) {
   return (
     <form action={formAction} className="flex flex-col gap-6">
       {state.message ? (
-        <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+        <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {state.message}
         </div>
       ) : null}
 
-      <Card className="border-border/80 bg-card/75 shadow-sm [--card-spacing:--spacing(6)]">
+      <Card className="[--card-spacing:--spacing(6)]">
         <CardHeader>
           <CardTitle className="font-heading text-2xl">Brand details</CardTitle>
           <CardDescription>
@@ -84,7 +84,7 @@ export function BrandEditForm({ brand }: { brand: BrandEditValues }) {
                 id="industry"
                 name="industry"
                 defaultValue={brand.industry}
-                className="h-10 w-full rounded-xl border border-input bg-background/70 px-3 text-sm text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive"
+                className="h-10 w-full rounded-xl border border-input bg-card px-3 text-sm text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/20 aria-invalid:border-destructive"
                 required
                 aria-invalid={!!state.errors?.industry}
               >
@@ -103,7 +103,7 @@ export function BrandEditForm({ brand }: { brand: BrandEditValues }) {
                 id="toneOfVoice"
                 name="toneOfVoice"
                 defaultValue={brand.toneOfVoice ?? ""}
-                className="h-10 w-full rounded-xl border border-input bg-background/70 px-3 text-sm text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                className="h-10 w-full rounded-xl border border-input bg-card px-3 text-sm text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/20"
               >
                 <option value="">Choose a tone</option>
                 {tones.map((tone) => (
@@ -144,11 +144,11 @@ export function BrandEditForm({ brand }: { brand: BrandEditValues }) {
         </CardContent>
       </Card>
 
-      <div className="flex flex-col-reverse gap-3 rounded-3xl border border-border/80 bg-card/70 p-4 sm:flex-row sm:items-center sm:justify-between">
-        <Button asChild variant="outline" className="rounded-full bg-background/60">
+      <div className="glass-card flex flex-col-reverse gap-3 rounded-2xl p-4 sm:flex-row sm:items-center sm:justify-between">
+        <Button asChild variant="outline">
           <Link href="/dashboard/brands">Back to brands</Link>
         </Button>
-        <Button type="submit" className="rounded-full" disabled={isPending}>
+        <Button type="submit"  disabled={isPending}>
           {isPending ? "Saving changes..." : "Save changes"}
         </Button>
       </div>
@@ -171,7 +171,7 @@ function Field({
 }) {
   return (
     <label className="flex flex-col gap-2" htmlFor={htmlFor}>
-      <span className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+      <span className="label-eyebrow text-muted-foreground">
         {label}
       </span>
       {children}

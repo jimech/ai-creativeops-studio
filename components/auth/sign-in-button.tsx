@@ -9,7 +9,7 @@ export function SignInButton() {
         await signIn("google", { redirectTo: "/dashboard" });
       }}
     >
-      <Button type="submit" className="rounded-full">
+      <Button type="submit" size="lg" className="w-full">
         Continue with Google
       </Button>
     </form>

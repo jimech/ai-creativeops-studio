@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { auth } from "@/auth";
+import { AmbientBackground } from "@/components/ui/ambient-background";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -92,9 +93,10 @@ export default async function Home() {
   const billingHref = session ? "/dashboard/billing" : "/sign-in";
 
   return (
-    <main className="min-h-screen overflow-hidden bg-background text-foreground">
-      <div className="mx-auto flex w-full max-w-7xl flex-col px-5 py-5 sm:px-8 lg:px-10">
-        <nav className="flex items-center justify-between rounded-3xl border border-border/80 bg-card/70 px-4 py-3 shadow-sm backdrop-blur md:px-6">
+    <main className="relative min-h-screen overflow-hidden bg-background text-foreground">
+      <AmbientBackground />
+      <div className="relative mx-auto flex w-full max-w-7xl flex-col px-5 py-5 sm:px-8 lg:px-10">
+        <nav className="glass-panel glass-interactive shadow-crisp flex items-center justify-between rounded-full px-4 py-3 md:px-6">
           <a href="#" className="flex flex-col leading-none">
             <span className="font-heading text-lg font-semibold tracking-tight">
               ai-creativeops-studio
@@ -104,16 +106,16 @@ export default async function Home() {
             </span>
           </a>
           <div className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex">
-            <a href="#features" className="transition-colors hover:text-foreground">
+            <a href="#features" className="transition-colors duration-200 hover:text-primary">
               Features
             </a>
             <a
               href="#how-it-works"
-              className="transition-colors hover:text-foreground"
+              className="transition-colors duration-200 hover:text-primary"
             >
               How it works
             </a>
-            <a href="#pricing" className="transition-colors hover:text-foreground">
+            <a href="#pricing" className="transition-colors duration-200 hover:text-primary">
               Pricing
             </a>
           </div>
@@ -158,7 +160,7 @@ export default async function Home() {
               {["Campaigns", "Captions", "Visuals"].map((label, index) => (
                 <div
                   key={label}
-                  className="rounded-2xl border border-border/80 bg-card/60 p-4"
+                  className="glass-card glass-interactive rounded-2xl p-4"
                 >
                   <p className="font-heading text-2xl font-semibold">
                     {index === 0 ? "12+" : index === 1 ? "30+" : "8"}
@@ -173,9 +175,9 @@ export default async function Home() {
 
           <Card
             id="demo"
-            className="relative border-border/80 bg-card/85 shadow-2xl shadow-primary/10 [--card-spacing:--spacing(6)]"
+            className="glass-card glass-interactive group/demo relative shadow-crisp-lg [--card-spacing:--spacing(6)]"
           >
-            <CardHeader className="border-b border-border/70">
+            <CardHeader className="border-b border-[rgba(var(--glass-tint),0.22)]">
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <CardTitle className="font-heading text-2xl">
@@ -185,12 +187,14 @@ export default async function Home() {
                     Mock AI campaign output for a clean beauty brand.
                   </CardDescription>
                 </div>
-                <Badge className="bg-primary/10 text-primary">Generated</Badge>
+                <Badge className="bg-primary/10 text-primary transition-colors duration-200 group-hover/demo:bg-primary/15">
+                  Generated
+                </Badge>
               </div>
             </CardHeader>
             <CardContent className="flex flex-col gap-5">
-              <div className="rounded-3xl border border-border/80 bg-secondary/45 p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-muted-foreground">
+              <div className="glass-surface-light glass-tile rounded-3xl p-5">
+                <p className="label-eyebrow text-muted-foreground">
                   Creative angle
                 </p>
                 <p className="mt-3 font-heading text-3xl font-semibold leading-tight">
@@ -198,17 +202,15 @@ export default async function Home() {
                 </p>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-border/70 bg-background/70 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-                    Caption
-                  </p>
+                <div className="glass-surface-light glass-tile rounded-2xl p-4">
+                  <p className="label-eyebrow text-muted-foreground">Caption</p>
                   <p className="mt-3 text-sm leading-6">
                     Meet the three-step ritual designed for warmer mornings and
                     softer skin days.
                   </p>
                 </div>
-                <div className="rounded-2xl border border-border/70 bg-background/70 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                <div className="glass-surface-light glass-tile rounded-2xl p-4">
+                  <p className="label-eyebrow text-muted-foreground">
                     Visual prompt
                   </p>
                   <p className="mt-3 text-sm leading-6">
@@ -220,7 +222,11 @@ export default async function Home() {
               <div className="flex flex-wrap gap-2">
                 {["Instagram", "Email", "Paid social", "Content calendar"].map(
                   (item) => (
-                    <Badge key={item} variant="secondary">
+                    <Badge
+                      key={item}
+                      variant="secondary"
+                      className="transition-all duration-200 hover:-translate-y-0.5 hover:bg-[rgba(255,255,255,0.7)] hover:shadow-sm"
+                    >
                       {item}
                     </Badge>
                   )
@@ -265,7 +271,7 @@ export default async function Home() {
           {features.map((feature) => (
             <Card
               key={feature.title}
-              className="border-border/80 bg-card/70 shadow-sm [--card-spacing:--spacing(5)]"
+              className="glass-card glass-interactive [--card-spacing:--spacing(5)]"
             >
               <CardHeader>
                 <CardTitle className="font-heading text-xl">
@@ -286,7 +292,7 @@ export default async function Home() {
         id="how-it-works"
         className="mx-auto w-full max-w-7xl px-5 pb-20 sm:px-8 lg:px-10"
       >
-        <div className="rounded-[2rem] border border-border/80 bg-card/75 p-6 shadow-sm sm:p-10">
+        <div className="rounded-[2rem] glass-card p-6 sm:p-10">
           <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
             <div className="flex flex-col gap-4">
               <Badge variant="secondary" className="w-fit">
@@ -338,7 +344,7 @@ export default async function Home() {
             connecting to AI or a database.
           </p>
         </div>
-        <Card className="border-border/80 bg-card/80 [--card-spacing:--spacing(6)]">
+        <Card className="glass-card glass-interactive [--card-spacing:--spacing(6)]">
           <CardHeader>
             <CardTitle className="font-heading text-3xl">
               Campaign: The Quiet Launch Edit
@@ -368,7 +374,7 @@ export default async function Home() {
           {plans.map((plan) => (
             <Card
               key={plan.name}
-              className="border-border/80 bg-card/75 shadow-sm [--card-spacing:--spacing(5)]"
+              className="glass-card glass-interactive [--card-spacing:--spacing(5)]"
             >
               <CardHeader>
                 <CardTitle className="font-heading text-2xl">
