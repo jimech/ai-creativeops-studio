@@ -2,6 +2,15 @@
 
 Use this checklist to prepare first Vercel production deployment. This document is intentionally operational and does not change app runtime behavior.
 
+## Live setup status
+
+- **Vercel project:** `ai-creativeops-studio-1` (GitHub: `jimech/ai-creativeops-studio`)
+- **Production URL:** https://ai-creativeops-studio-1.vercel.app
+- **Configure env vars in the Vercel Dashboard** (Settings → Environment Variables). Do not rely on local `.env` files during CLI deploys; use `.vercelignore` to keep them out of upload bundles.
+- **Google OAuth redirect URI:** https://ai-creativeops-studio-1.vercel.app/api/auth/callback/google
+- **Stripe webhook endpoint:** https://ai-creativeops-studio-1.vercel.app/api/stripe/webhook
+- **Do not set `AI_GENERATION_MODE=mock` in production** — unset it or use a non-mock value so real OpenAI generation is allowed.
+
 ## 1) Vercel Project Setup
 
 - Create/select the Vercel project connected to this repository.
@@ -13,7 +22,7 @@ Use this checklist to prepare first Vercel production deployment. This document 
 
 ## 2) Production Environment Variables
 
-Set all required variables in Vercel production environment before first deploy:
+Set all required variables in the **Vercel Dashboard** (Production environment) before relying on the live deployment. CLI deploys must not substitute for dashboard configuration.
 
 - `DATABASE_URL`
 - `AUTH_SECRET`
@@ -59,11 +68,11 @@ Notes:
 
 In Google Cloud OAuth client settings, add production URLs:
 
-- Authorized JavaScript origins: `https://<your-domain>`
+- Authorized JavaScript origins: `https://ai-creativeops-studio-1.vercel.app`
 - Authorized redirect URI:
-  - `https://<your-domain>/api/auth/callback/google`
+  - `https://ai-creativeops-studio-1.vercel.app/api/auth/callback/google`
 
-Ensure these align with `AUTH_URL`.
+Ensure these align with `AUTH_URL` (`https://ai-creativeops-studio-1.vercel.app`).
 
 ## 6) Stripe Mode Decision Checklist (Test vs Live)
 
@@ -82,7 +91,7 @@ For selected mode, verify:
 
 Create webhook endpoint in Stripe Dashboard:
 
-- URL: `https://<your-domain>/api/stripe/webhook`
+- URL: `https://ai-creativeops-studio-1.vercel.app/api/stripe/webhook`
 - Events:
   - `checkout.session.completed`
   - `customer.subscription.created`
@@ -113,4 +122,5 @@ After first deploy, verify:
 - Vercel install must run `postinstall` (`prisma generate`).
 - Production database must have migrations applied.
 - Webhook secret must be from the exact configured endpoint and mode.
-- `AUTH_URL` and `NEXT_PUBLIC_APP_URL` must match deployed domain exactly.
+- `AUTH_URL` and `NEXT_PUBLIC_APP_URL` must match deployed domain exactly (`https://ai-creativeops-studio-1.vercel.app`).
+- Local `.env` files are excluded from CLI uploads via `.vercelignore`; set secrets only in the Vercel Dashboard.
